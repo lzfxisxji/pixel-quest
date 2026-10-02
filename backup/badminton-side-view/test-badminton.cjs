@@ -1,6 +1,5 @@
 const assert=require('node:assert/strict');
 const {Match,COURT,ABILITIES,DIFFICULTIES,integrate,flight,launchVelocity}=require('./badminton-core.js');
-const view=require('./badminton-view.js');
 const chars=require('./character-assets.js');
 let count=0;function test(name,fn){try{fn();count++;console.log('PASS '+name);}catch(e){console.error('FAIL '+name,e);process.exitCode=1;}}
 const step=(m,n,input={})=>{for(let i=0;i<n;i++)m.step(1/60,input);};
@@ -32,87 +31,4 @@ function autopilot(m){
   return {move:Math.abs(p.x-target)<5?0:Math.sign(target-p.x),shot:m.special&&p.meter>=100&&p.skillCooldown<=0?'special':'clear',jump:false};
 }
 test('Full 11-point matches finish for all six characters in both formats without invalid physics',()=>{for(const character of chars.ids)for(const mode of ['normal','special']){const m=new Match({character,opponent:character,difficulty:'medium',mode,seed:75});let frames=0;while(m.phase!=='finished'&&frames++<36000){m.step(1/60,autopilot(m));assert(Number.isFinite(m.shuttle.x)&&Number.isFinite(m.shuttle.y));}assert.equal(m.phase,'finished',character+' '+mode);assert.equal(Math.max(...m.score),11);assert(m.bestRally>=2);}});
-/* ---- the shuttle now flies through the court width as well as its length ---- */
-test('A shot carries the shuttle across the court and lands it on the aimed lane',()=>{
-  for(const [shot,lane] of [['clear',.28],['drop',.72],['smash',.62]]){
-    const m=new Match({seed:3}),p=m.players[0];
-    p.z=.5;m.phase='rally';Object.assign(m.shuttle,{x:150,y:190,z:.5,vz:0,lastHitter:1,live:true});
-    assert(m.performHit(p,shot),shot+' connects');
-    assert(m.shuttle.vz!==0,'the shot has lateral velocity');
-    const path=flight(m.shuttle),land=path[path.length-1];
-    assert(Math.abs(land.z-lane)<.01,shot+' lands on lane '+lane+' (got '+land.z.toFixed(3)+')');
-    assert(Math.sign(m.shuttle.vz)===Math.sign(lane-.5)||Math.abs(lane-.5)<.02,'it travels towards that lane');
-  }
-});
-test('The lane is a real reach limit, so the corners have to be chased',()=>{
-  const m=new Match({seed:4}),p=m.players[0];
-  m.phase='rally';
-  for(const dz of [0,.1,-.16]){
-    Object.assign(m.shuttle,{x:p.x+15,y:p.y-34,z:p.z+dz,lastHitter:1,live:true});
-    assert(m.inReach(p),'lane offset '+dz+' is inside the racket');
-  }
-  Object.assign(m.shuttle,{x:p.x+15,y:p.y-34,z:p.z+.3,lastHitter:1,live:true});
-  assert(!m.inReach(p),'a ball a third of a court away is out of reach');
-  Object.assign(m.shuttle,{x:p.x+15,y:p.y-34,z:p.z+.8,lastHitter:1,live:true});
-  assert(!m.inReach(p));
-});
-test('The AI covers the lane the shuttle is coming down in',()=>{
-  const m=new Match({difficulty:'hard',seed:11});
-  m.serve();
-  const landing=flight(m.shuttle).at(-1);
-  let closest=1;
-  for(let i=0;i<200;i++){m.step(1/60);if(m.phase!=='rally')break;closest=Math.min(closest,Math.abs(m.players[1].z-landing.z));}
-  assert(closest<.12,'the AI walks to the landing lane (closest '+closest.toFixed(3)+' to '+landing.z.toFixed(2)+')');
-  assert(m.players[1].z>=0&&m.players[1].z<=1);
-});
-test('Lateral faults cannot happen, because every aimed shot is inside the sidelines',()=>{
-  for(const difficulty of Object.keys(DIFFICULTIES))for(const seed of [1,7,21,42]){
-    const m=new Match({difficulty,seed});m.serve();
-    for(let i=0;i<900&&m.phase!=='finished';i++){
-      m.step(1/60,{move:Math.sin(i/40)>0?1:-1,side:Math.sin(i/17)>0?1:-1,shot:m.phase==='rally'&&i%90===0?'clear':null});
-      if(m.phase==='rally')assert(m.shuttle.z>=0&&m.shuttle.z<=1,'the shuttle stays on the court width');
-    }
-  }
-});
-
-/* ---- the 2.5D projection the renderer and the markers both read from ---- */
-const V=view,P2=(x,z,y)=>view.projectCourt(x,z,y===undefined?COURT.floor:y);
-test('The camera frames the entire playable envelope and the whole court',()=>{
-  for(const [x,z] of [[60,0],[60,1],[420,0],[420,1]]){const p=P2(x,z);assert(p.depth>0&&!p.behind);assert(p.x>0&&p.x<480,'envelope point '+x+'/'+z+' is on screen (x '+p.x.toFixed(0)+')');assert(p.y>46&&p.y<268,'and clear of the score bar (y '+p.y.toFixed(0)+')');}
-  for(const [x,z] of [[52,0],[52,1],[428,0],[428,1]]){const p=P2(x,z);assert(p.depth>0);assert(p.y>-10&&p.y<276,'court corner '+x+'/'+z+' is on screen (y '+p.y.toFixed(0)+')');}
-  // the near player's head must not be hidden behind the score bar
-  const head=P2(60,1,COURT.floor-view.SPRITE_METRES*view.PX_PER_M);assert(head.y>0,'the near sprite top is on screen');
-});
-test('The four footwork directions are four different screen directions',()=>{
-  const at=(x,z)=>P2(x,z),d=(a,b)=>({x:b.x-a.x,y:b.y-a.y});
-  const here=at(136,.5),deltas={along: d(here,at(236,.5)), back: d(here,at(36,.5)), front: d(here,at(136,1)), rear: d(here,at(136,0))};
-  for(const [name,v] of Object.entries(deltas)){
-    assert(Math.hypot(v.x,v.y)>30,name+' moves a visible distance on screen');
-    assert(Math.abs(v.x)>12&&Math.abs(v.y)>12,name+' is diagonal, not axis aligned ('+v.x.toFixed(0)+','+v.y.toFixed(0)+')');
-  }
-  const keys=Object.entries(deltas),angle=(a,b)=>Math.acos(Math.max(-1,Math.min(1,(a.x*b.x+a.y*b.y)/(Math.hypot(a.x,a.y)*Math.hypot(b.x,b.y)))))*180/Math.PI;
-  for(let i=0;i<keys.length;i++)for(let j=i+1;j<keys.length;j++)assert(angle(keys[i][1],keys[j][1])>55,keys[i][0]+' and '+keys[j][0]+' differ by '+angle(keys[i][1],keys[j][1]).toFixed(0)+' degrees');
-  assert(deltas.along.x>0&&deltas.along.y<0,'walking up the court goes up and right');
-  assert(deltas.front.x>0&&deltas.front.y>0,'moving to the front line goes down and right');
-});
-test('Characters scale with distance, so depth is visible',()=>{
-  const near=view.spriteOf(60,1).height,far=view.spriteOf(420,0).height;
-  assert(near>far*1.25,'the near corner draws '+near.toFixed(1)+'px against '+far.toFixed(1)+'px far away');
-  assert(view.spriteOf(136,1).height>view.spriteOf(136,0).height,'the front line is nearer than the back line');
-  assert(view.spriteOf(136,.5).height>view.spriteOf(420,.5).height,'our half is nearer than theirs');
-  for(const h of [view.spriteOf(60,1).height,view.spriteOf(420,0).height])assert(h>28&&h<72,'sprites stay a readable size ('+h.toFixed(1)+'px)');
-});
-test('Markings land on the court, and the tilt really squashes round things',()=>{
-  for(const [x0,z0,x1,z1] of view.LINES)for(const [x,z] of [[x0,z0],[x1,z1]]){const p=P2(x,z);assert(p.depth>0&&!p.behind,'marking '+x+'/'+z+' is in front of the camera');}
-  const loop=(()=>{const out=[];for(let i=0;i<24;i++){const a=i/24*Math.PI*2;out.push(P2(136+Math.cos(a)*1.5*view.PX_PER_M,.5+Math.sin(a)*1.5/view.COURT.width));}return out;})();
-  const w=Math.max(...loop.map(p=>p.x))-Math.min(...loop.map(p=>p.x)),h=Math.max(...loop.map(p=>p.y))-Math.min(...loop.map(p=>p.y));
-  assert(w>h*1.6,'a 1.5 m ring on the floor projects '+w.toFixed(0)+'px wide and only '+h.toFixed(0)+'px tall');
-});
-test('The simulation bridge keeps the old anchors: net, baselines and floor are unmoved',()=>{
-  assert.equal(V.NET_X,COURT.net);assert.equal(V.LEFT,COURT.left);assert.equal(V.RIGHT,COURT.right);assert.equal(V.FLOOR,COURT.floor);
-  assert(Math.abs(V.metresUp(COURT.floor))<1e-9,'the floor is zero metres high');
-  assert(Math.abs(V.metresUp(COURT.netTop)-V.COURT.netHeight)<.01,'the net still measures 1.55 m');
-  assert(Math.abs(V.metresAlong(COURT.net))<1e-9,'the net is the middle of the length');
-  assert(Math.abs(V.SERVICE_LINE-1.98*V.PX_PER_M)<1e-6,'the short service line is 1.98 m from the net');
-});
 console.log(count+' badminton checks passed.');

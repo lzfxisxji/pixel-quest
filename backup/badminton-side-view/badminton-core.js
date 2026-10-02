@@ -23,26 +23,15 @@
   // LANE_SPEED is how many court widths per second the base player covers, and it
   // scales with the player's speed so both axes share one acceleration curve.
   const LANE_SPEED=1.8;
-  // The shuttle now flies through the same volume, so a rally moves sideways as well
-  // as up and down the court. REACH_LANE is how far across the width a racket
-  // reaches: roughly 0.9 m, so a clear into one corner and a drop into the other
-  // must be answered with footwork rather than a fixed stance.
-  const REACH_LANE=.17;
-  // Where each shot is aimed across the width. The shuttle starts at the striker's
-  // own lane and is given the lateral velocity that lands it on the target lane, so
-  // the trajectory, the landing marker and the AI's cover all read from one number.
-  const LANE_SHOT={clear:.28,drop:.72,smash:.62};
-  const laneTarget=(shot)=>clamp(LANE_SHOT[shot]??LANE_SHOT.clear,0,1);
   function integrate(b,dt){
     const speed=Math.hypot(b.vx,b.vy),drag=b.drag??.0045;
     b.vx-=drag*speed*b.vx*dt;
     b.vy+=(274-drag*speed*b.vy)*dt;
     b.x+=b.vx*dt;b.y+=b.vy*dt;
-    if(b.vz)b.z+=b.vz*dt;
   }
   function flight(b,max=4){
     const copy={...b},path=[];
-    for(let t=0;t<max;t+=1/120){integrate(copy,1/120);path.push({x:copy.x,y:copy.y,z:copy.z,t});if(copy.y>=COURT.floor-3)break;}
+    for(let t=0;t<max;t+=1/120){integrate(copy,1/120);path.push({x:copy.x,y:copy.y,t});if(copy.y>=COURT.floor-3)break;}
     return path;
   }
   function launchVelocity(x,y,target,vy,drag=.0045,ensureClear=true){
@@ -71,10 +60,10 @@
     resetRally(){
       this.phase='serve';this.timer=0;this.rally=0;this.aiClock=0;this.aiTarget=344;this.aiLane=.5;this.aiAttempt=0;
       for(const p of this.players){p.x=p.side?344:136;p.y=COURT.floor;p.vx=0;p.vy=0;p.z=.5;p.vz=0;p.ground=true;p.jumpVisual=false;p.swing=0;p.cooldown=0;}
-      this.shuttle={x:0,y:0,z:.5,vx:0,vy:0,vz:0,drag:.0045,lastHitter:null,trail:[],skill:null,live:false};
+      this.shuttle={x:0,y:0,vx:0,vy:0,drag:.0045,lastHitter:null,trail:[],skill:null,live:false};
       this.attachServe();this.message=this.server?'AI SERVING…':'YOUR SERVE · J TO START';this.messageTime=2;
     }
-    attachServe(){const p=this.players[this.server];this.shuttle.x=p.x+(p.side?-17:17);this.shuttle.y=p.y-35;this.shuttle.z=p.z;this.shuttle.vz=0;}
+    attachServe(){const p=this.players[this.server];this.shuttle.x=p.x+(p.side?-17:17);this.shuttle.y=p.y-35;}
     serve(){if(this.phase!=='serve')return false;const p=this.players[this.server];this.phase='rally';this.shuttle.live=true;this.performHit(p,'clear',true);this.events.push({type:'serve',side:this.server});return true;}
     requestSwing(side,shot='clear'){
       const p=this.players[side];if(this.phase==='serve'){if(side===this.server)return this.serve();return false;}
@@ -82,55 +71,38 @@
       if(shot==='special'&&(!this.special||p.meter<100||p.skillCooldown>0))return false;
       p.swing=.24;p.cooldown=.29;p.shot=shot;p.animation=.28;return true;
     }
-    inReach(p){
-      const b=this.shuttle,dx=b.x-(p.x+(p.side?-15:15)),dy=b.y-(p.y-34),dz=(b.z??.5)-(p.z??.5);
-      return Math.abs(dz)<=REACH_LANE&&dx*dx/(48*48)+dy*dy/(39*39)<=1&&b.x>=(p.side?COURT.net-4:COURT.left-15)&&b.x<=(p.side?COURT.right+15:COURT.net+4);
-    }
+    inReach(p){const b=this.shuttle,dx=b.x-(p.x+(p.side?-15:15)),dy=b.y-(p.y-34);return dx*dx/(48*48)+dy*dy/(39*39)<=1&&b.x>=(p.side?COURT.net-4:COURT.left-15)&&b.x<=(p.side?COURT.right+15:COURT.net+4);}
     performHit(p,shot,serving=false){
       const b=this.shuttle;if(!serving&&(b.lastHitter===p.side||!this.inReach(p)))return false;
       const opponent=this.players[1-p.side],dir=p.side?-1:1;
-      let target=p.side?102:378,lane=laneTarget(shot),vy=-205,drag=.0045,skill=null;
+      let target=p.side?102:378,vy=-205,drag=.0045,skill=null;
       if(shot==='drop'){target=p.side?205:275;vy=-160;drag=.0058;}
       if(shot==='smash'){target=p.side?115:365;vy=p.ground?-150:25;drag=.0032;}
       if(shot==='special'){
         skill=ABILITIES[p.character]||ABILITIES.explorer;vy=skill.vy;drag=skill.drag;
         if(p.character==='goku'&&p.ground)vy=-175;
-        if(skill.target==='front'){target=p.side?201:279;lane=laneTarget('drop');}
-        if(skill.target==='open'){
-          target=opponent.x>(p.side?144:336)?(p.side?80:275):(p.side?205:400);
-          lane=(opponent.z??.5)<.5?.8:.2;   // the corner the opponent has left open
-        }
-        if(skill.target==='back')lane=laneTarget('clear');
+        if(skill.target==='front')target=p.side?201:279;
+        if(skill.target==='open')target=opponent.x>(p.side?144:336)?(p.side?80:275):(p.side?205:400);
         p.meter=0;p.skillCooldown=8;if(p.character==='dora')p.boost=2;
         this.message=skill.name.toUpperCase();this.messageTime=1.1;
       }
-      if(p.side&&!serving){
-        target+=(this.random()-.5)*2*this.config.error;
-        // The AI is looser than its placement error suggests across the width, so a
-        // rally keeps moving sideways instead of settling into one corner.
-        lane=clamp(lane+(this.random()-.5)*2*(this.config.error/38*.18),.06,.94);
-      }
+      if(p.side&&!serving){target+= (this.random()-.5)*2*this.config.error;}
       target=clamp(target,COURT.left-12,COURT.right+12);
       const launch=launchVelocity(b.x,b.y,target,vy,drag);
-      // The lateral velocity is whatever lands the shuttle on the target lane at the
-      // moment it reaches the floor, so the marker the renderer draws is exact.
-      const path=flight({x:b.x,y:b.y,z:b.z??.5,vx:launch.vx,vy:launch.vy,drag});
-      const air=Math.max(1/60,path[path.length-1]?.t??0);
-      const vz=(lane-(b.z??.5))/air;
-      Object.assign(b,launch,{vz,lastHitter:p.side,skill:skill?{character:p.character,color:skill.color}:null,live:true});
+      Object.assign(b,launch,{lastHitter:p.side,skill:skill?{character:p.character,color:skill.color}:null,live:true});
       p.swing=0;p.animation=.25;p.shot=shot;p.hits++;if(shot!=='special')p.meter=Math.min(100,p.meter+25);
       this.rally++;this.bestRally=Math.max(this.bestRally,this.rally);this.aiClock=this.config.reaction;this.aiAttempt=0;
       this.events.push({type:'hit',side:p.side,shot,skill:skill?.name});
-      this.burst(b.x,b.y,skill?.color||'#fff2b6',10,b.z??.5);
+      this.burst(b.x,b.y,skill?.color||'#fff2b6',10);
       return true;
     }
-    burst(x,y,color,count=15,z=.5){for(let i=0;i<count;i++){const angle=this.random()*Math.PI*2,speed=20+this.random()*65;this.particles.push({x,y,z,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,vz:(this.random()-.5)*.9,life:.4+this.random()*.3,color});}}
+    burst(x,y,color,count=15){for(let i=0;i<count;i++){const angle=this.random()*Math.PI*2,speed=20+this.random()*65;this.particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,life:.4+this.random()*.3,color});}}
     award(side,reason){
       if(this.phase!=='rally')return;
       this.score[side]++;this.server=side;this.phase='point';this.timer=1.7;this.shuttle.live=false;
       this.message=(side?'AI POINT':'YOUR POINT')+' · '+reason;this.messageTime=1.7;
       if(this.score[side]>=11)this.winner=side;
-      this.events.push({type:'point',side,reason,score:[...this.score]});this.burst(this.shuttle.x,Math.min(this.shuttle.y,COURT.floor),side?'#f3939a':'#ffdb70',20,this.shuttle.z??.5);
+      this.events.push({type:'point',side,reason,score:[...this.score]});this.burst(this.shuttle.x,Math.min(this.shuttle.y,COURT.floor),side?'#f3939a':'#ffdb70',20);
     }
     ai(dt){
       const p=this.players[1],b=this.shuttle,c=this.config;
@@ -143,9 +115,9 @@
           const path=flight(b);let intercept=path.find(q=>q.y>=COURT.floor-42&&q.y>b.y&&q.x>COURT.net);
           if(!intercept)intercept=path[path.length-1];
           this.aiTarget=clamp(intercept.x-10+(this.random()-.5)*c.error*.4,COURT.net+23,COURT.right-10);
-          // Cover the lane the shuttle is actually coming down in, so the AI's footwork
-          // reads on the same cross-court axis the player uses.
-          this.aiLane=clamp(intercept.z??.5,0,1);
+          // Stand forward for a short ball and deep for a long one, exaggerated so the
+          // shuffle actually reads on a court that is only 30 px wide on screen.
+          this.aiLane=clamp(1.12-1.24*clamp((intercept.x-COURT.net)/(COURT.right-COURT.net),0,1),0,1);
         }else{this.aiTarget=338;this.aiLane=.5;}
       }
       const movement=Math.abs(this.aiTarget-p.x)>6?Math.sign(this.aiTarget-p.x):0;
@@ -198,7 +170,7 @@
       for(const p of this.players)p.swing=Math.max(0,p.swing-dt);
       this.stepParticles(dt);
     }
-    stepParticles(dt){for(const p of this.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=(p.vz||0)*dt;p.vy+=80*dt;p.life-=dt;}this.particles=this.particles.filter(p=>p.life>0);}
+    stepParticles(dt){for(const p of this.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=80*dt;p.life-=dt;}this.particles=this.particles.filter(p=>p.life>0);}
     snapshot(){return {phase:this.phase,paused:this.paused,score:[...this.score],server:this.server,winner:this.winner,rally:this.rally,bestRally:this.bestRally,options:{...this.options},players:this.players.map(p=>({...p})),shuttle:{...this.shuttle,trail:undefined},message:this.message};}
   }
   const api=Object.freeze({Match,COURT,DIFFICULTIES,ABILITIES,integrate,flight,launchVelocity});
