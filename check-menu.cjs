@@ -1,10 +1,15 @@
 /* Browser acceptance for the Pixel Quest main menu mode selection (Adventure / Badminton).
    Dependency-free: it drives real Chrome over the DevTools protocol using Node's built-in
    fetch and WebSocket, so no Playwright install is required. Run with the local server up,
-   or let this script start one itself:  node check-menu.cjs */
+   or let this script start one itself:  node check-menu.cjs
+   Point it at a deployed copy instead with PQ_SITE, e.g.
+   PQ_SITE=https://lzfxisxji.github.io/pixel-quest/ node check-menu.cjs (no local server is
+   started in that case). */
 const {spawn,spawnSync}=require('child_process'),fs=require('fs'),path=require('path'),os=require('os');
 const assert=require('node:assert/strict');
-const PORT=9333,SITE='http://localhost:4173/';
+const PORT=9333,SITE=process.env.PQ_SITE||'http://localhost:4173/';
+// Where the site's home page lives. '/' on the local server, '/<repo>/' on GitHub Pages.
+const BASE=new URL(SITE).pathname;
 const CHROME=process.env.CHROME_PATH||'C:/Program Files/Google/Chrome/Application/chrome.exe';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;while(Date.now()-start<timeout){try{const v=await fn();if(v)return v;}catch(error){last=error;}await sleep(120);}throw new Error('timeout waiting for '+label+(last?' :: '+last.message:''));}
@@ -93,7 +98,7 @@ async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;w
     await click('#bd-modal-tertiary');
     assert.equal(await evaluate("document.querySelector('#bd-modal-title').textContent"),'RETURN HOME?');
     await click('#bd-modal-primary');
-    await waitFor(()=>evaluate("location.pathname==='/'||location.pathname.endsWith('index.html')"),'back to the main menu');
+    await waitFor(()=>evaluate("location.pathname==="+JSON.stringify(BASE)+"&&typeof PixelBadminton==='undefined'"),'back to the main menu');
     await waitFor(()=>evaluate("typeof PixelQuest==='object'&&PixelQuest.state==='title'"),'main menu state');
     menu=await menuState();
     assert.equal(menu.overlayHidden,false);assert.equal(menu.badmintonHidden,false);

@@ -4,7 +4,9 @@ A complete, original four-stage browser platformer inspired by the feel of 8-bit
 
 ## Play
 
-Open `index.html` directly in a modern browser, or run `npm run dev` from a command prompt in this folder and visit **http://localhost:4173**. `npm run dev` starts the local server with caching disabled, so edited scripts and styles show up on reload. `npm start` serves the same folder on the same port without that. Node.js is required only for the optional local server. The game itself has no package dependencies. Web fonts are optional; built-in fallbacks work offline. Set `PORT` to serve on another port.
+**Play now in your browser: <https://lzfxisxji.github.io/pixel-quest/>** — the main menu offers **ADVENTURE** or **BADMINTON**, and both return to the main menu. The badminton court alone is at <https://lzfxisxji.github.io/pixel-quest/badminton.html>.
+
+To run it on your own machine, open `index.html` directly in a modern browser, or run `npm run dev` from a command prompt in this folder and visit **http://localhost:4173**. `npm run dev` starts the local server with caching disabled, so edited scripts and styles show up on reload. `npm start` serves the same folder on the same port without that. Node.js is required only for the optional local server. The game itself has no package dependencies. Web fonts are optional; built-in fallbacks work offline. Set `PORT` to serve on another port.
 
 ## Controls
 
@@ -48,7 +50,7 @@ Each stage has a midway checkpoint for recovery after a lost life. Progress save
 
 ## Validation
 
-Run `npm run check` for syntax checks and `node test-game.cjs` for deterministic gameplay acceptance checks covering movement, jumping, character-specific pickups, weapons, enemies, fireworks, stage progression, and victory. With the server running, `node check-pickups.cjs` checks the item art in Chrome and writes `preview-powerups.png`; `node check-finish.cjs` checks the finish sequence; `node check-menu.cjs` drives real Chrome over the DevTools protocol (no Playwright install needed) to check the main menu mode row, Adventure Mode, Badminton Mode, returning to the main menu from either mode, and the phone layout, writing `preview-mode-select.png` and `preview-mode-select-mobile.png`.
+Run `npm run check` for syntax checks and `node test-game.cjs` for deterministic gameplay acceptance checks covering movement, jumping, character-specific pickups, weapons, enemies, fireworks, stage progression, and victory. With the server running, `node check-pickups.cjs` checks the item art in Chrome and writes `preview-powerups.png`; `node check-finish.cjs` checks the finish sequence; `node check-menu.cjs` drives real Chrome over the DevTools protocol (no Playwright install needed) to check the main menu mode row, Adventure Mode, Badminton Mode, returning to the main menu from either mode, and the phone layout, writing `preview-mode-select.png` and `preview-mode-select-mobile.png`. Point it at the deployed copy instead of localhost with `PQ_SITE=https://lzfxisxji.github.io/pixel-quest/ node check-menu.cjs`; the same 10 checks pass against GitHub Pages.
 
 The game uses a fixed 60 Hz simulation with a capped accumulator, responsive pixel-rendered canvas, procedural parallax scenery, and Web Audio synthesis. The game and its art are an original homage, not an official Nintendo release.
 # Shuttle Club — independent badminton mode
