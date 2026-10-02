@@ -17,6 +17,12 @@
     nezha:{name:'Crimson ribbon drop',description:'A deceptive, curling drop into the front court.',color:'#ff8dad',vy:-165,drag:.0065,target:'front'}
   });
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  // Footwork has two axes. x runs along the 13.4 m length; z runs across the court
+  // width, 0 at the back line and 1 at the front line. Height stays in y, so
+  // jumping, reach and shuttle physics are untouched by the lateral axis.
+  // LANE_SPEED is how many court widths per second the base player covers, and it
+  // scales with the player's speed so both axes share one acceleration curve.
+  const LANE_SPEED=1.8;
   function integrate(b,dt){
     const speed=Math.hypot(b.vx,b.vy),drag=b.drag??.0045;
     b.vx-=drag*speed*b.vx*dt;
@@ -48,12 +54,12 @@
   class Match{
     constructor(options={}){this.options={character:'explorer',opponent:'soldier',difficulty:'medium',mode:'normal',...options};this.seed=(options.seed??Date.now())>>>0;this.events=[];this.tick=0;this.paused=false;this.score=[0,0];this.server=0;this.phase='serve';this.timer=0;this.rally=0;this.bestRally=0;this.winner=null;this.message='YOUR SERVE · J TO START';this.messageTime=2;this.particles=[];this.players=[this.newPlayer(0,this.options.character),this.newPlayer(1,this.options.opponent)];this.resetRally();}
     random(){this.seed=(Math.imul(this.seed,1664525)+1013904223)>>>0;return this.seed/4294967296;}
-    newPlayer(side,character){return {side,character,x:side?344:136,y:COURT.floor,vx:0,vy:0,ground:true,jumpVisual:false,swing:0,shot:'clear',cooldown:0,meter:50,skillCooldown:0,boost:0,jumpBuffer:0,animation:0,hits:0};}
+    newPlayer(side,character){return {side,character,x:side?344:136,y:COURT.floor,vx:0,vy:0,z:.5,vz:0,ground:true,jumpVisual:false,swing:0,shot:'clear',cooldown:0,meter:50,skillCooldown:0,boost:0,jumpBuffer:0,animation:0,hits:0};}
     get config(){return DIFFICULTIES[this.options.difficulty]||DIFFICULTIES.medium;}
     get special(){return this.options.mode==='special';}
     resetRally(){
-      this.phase='serve';this.timer=0;this.rally=0;this.aiClock=0;this.aiTarget=344;this.aiAttempt=0;
-      for(const p of this.players){p.x=p.side?344:136;p.y=COURT.floor;p.vx=0;p.vy=0;p.ground=true;p.jumpVisual=false;p.swing=0;p.cooldown=0;}
+      this.phase='serve';this.timer=0;this.rally=0;this.aiClock=0;this.aiTarget=344;this.aiLane=.5;this.aiAttempt=0;
+      for(const p of this.players){p.x=p.side?344:136;p.y=COURT.floor;p.vx=0;p.vy=0;p.z=.5;p.vz=0;p.ground=true;p.jumpVisual=false;p.swing=0;p.cooldown=0;}
       this.shuttle={x:0,y:0,vx:0,vy:0,drag:.0045,lastHitter:null,trail:[],skill:null,live:false};
       this.attachServe();this.message=this.server?'AI SERVING…':'YOUR SERVE · J TO START';this.messageTime=2;
     }
@@ -109,9 +115,13 @@
           const path=flight(b);let intercept=path.find(q=>q.y>=COURT.floor-42&&q.y>b.y&&q.x>COURT.net);
           if(!intercept)intercept=path[path.length-1];
           this.aiTarget=clamp(intercept.x-10+(this.random()-.5)*c.error*.4,COURT.net+23,COURT.right-10);
-        }else this.aiTarget=338;
+          // Stand forward for a short ball and deep for a long one, exaggerated so the
+          // shuffle actually reads on a court that is only 30 px wide on screen.
+          this.aiLane=clamp(1.12-1.24*clamp((intercept.x-COURT.net)/(COURT.right-COURT.net),0,1),0,1);
+        }else{this.aiTarget=338;this.aiLane=.5;}
       }
       const movement=Math.abs(this.aiTarget-p.x)>6?Math.sign(this.aiTarget-p.x):0;
+      const lateral=Math.abs(this.aiLane-p.z)>.02?Math.sign(this.aiLane-p.z):0;
       let jump=false;
       if(b.lastHitter===0&&Math.abs(b.x-p.x)<70&&b.y<158&&b.vy>0&&p.ground&&this.random()<c.jumpChance*dt*12)jump=true;
       if(b.lastHitter===0&&this.inReach(p)&&p.cooldown<=0){
@@ -122,7 +132,7 @@
           this.requestSwing(1,shot);this.aiAttempt=0;
         }
       }
-      return {move:movement,jump};
+      return {move:movement,side:lateral,jump};
     }
     step(dt,input={}){
       if(this.paused||this.phase==='finished')return;
@@ -136,12 +146,13 @@
       if(input.shot)this.requestSwing(0,input.shot);
       const ai=this.ai(dt);
       for(let side=0;side<2;side++){
-        const p=this.players[side],control=side?ai:input,speed=(side?this.config.speed:126)*(p.boost>0?1.25:1),desired=(control.move||0)*speed;
-        const acceleration=p.ground?1000:650;
+        const p=this.players[side],control=side?ai:input,speed=(side?this.config.speed:126)*(p.boost>0?1.25:1),desired=(control.move||0)*speed,laneScale=LANE_SPEED/126,desiredLane=(control.side||0)*speed*laneScale;
+        const acceleration=p.ground?1000:650,laneAcceleration=acceleration*laneScale;
         p.vx+=clamp(desired-p.vx,-acceleration*dt,acceleration*dt);
+        p.vz+=clamp(desiredLane-p.vz,-laneAcceleration*dt,laneAcceleration*dt);
         if(control.jump)p.jumpBuffer=.12;
         if(p.jumpBuffer>0&&p.ground){p.vy=-230;p.ground=false;p.jumpVisual=true;p.jumpBuffer=0;this.events.push({type:'jump',side});}
-        p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.x+=p.vx*dt;p.x=clamp(p.x,side?COURT.net+19:COURT.left+8,side?COURT.right-8:COURT.net-19);
+        p.jumpBuffer=Math.max(0,p.jumpBuffer-dt);p.x+=p.vx*dt;p.z=clamp(p.z+p.vz*dt,0,1);p.x=clamp(p.x,side?COURT.net+19:COURT.left+8,side?COURT.right-8:COURT.net-19);
         if(!p.ground){p.vy+=620*dt;p.y+=p.vy*dt;if(p.y>=COURT.floor){p.y=COURT.floor;p.vy=0;p.ground=true;p.jumpVisual=false;}}
       }
       if(this.phase==='serve')this.attachServe();

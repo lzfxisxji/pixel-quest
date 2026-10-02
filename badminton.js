@@ -54,7 +54,7 @@
   $('#bd-fullscreen').addEventListener('click',()=>{const promise=document.fullscreenElement?document.exitFullscreen():$('.badminton-screen').requestFullscreen();promise?.catch(()=>{});});
   const fsTools=document.createElement('div');fsTools.className='bd-fullscreen-tools';fsTools.innerHTML='<button aria-label="Pause fullscreen match">Ⅱ</button><button aria-label="Exit fullscreen">⛶</button>';$('.badminton-screen').append(fsTools);fsTools.children[0].onclick=()=>$('#bd-pause').click();fsTools.children[1].onclick=()=>$('#bd-fullscreen').click();
   const fsTouch=$('.bd-touch').cloneNode(true);fsTouch.classList.add('bd-fs-touch');$('.badminton-screen').append(fsTouch);
-  const relevant=new Set(['ArrowLeft','ArrowRight','KeyA','KeyD','Space','KeyK','KeyJ','KeyH','KeyL','KeyE','KeyP','Escape']);
+  const relevant=new Set(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','KeyA','KeyD','KeyW','KeyS','Space','KeyK','KeyJ','KeyH','KeyL','KeyE','KeyP','Escape']);
   window.addEventListener('keydown',e=>{
     if((e.code==='KeyP'||e.code==='Escape')&&match){e.preventDefault();if(e.repeat)return;if(dialog==='leave'||dialog==='setup')showDialog(match.phase==='finished'?'finished':'paused');else if(dialog==='paused')resume();else if(!dialog&&match.phase!=='finished')showDialog('paused');return;}
     if(e.code==='Enter'&&setup.hidden===false&&e.target.tagName!=='SELECT'&&e.target.tagName!=='BUTTON'){e.preventDefault();start();return;}
@@ -68,7 +68,10 @@
     b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);sound.init();if(!keys.has(b.dataset.bdKey))edges.add(b.dataset.bdKey);keys.add(b.dataset.bdKey);b.classList.add('held');});
     for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>{keys.delete(b.dataset.bdKey);b.classList.remove('held');});
   }
-  function input(){const move=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA'));let shot=edges.has('KeyE')?'special':keys.has('KeyH')?'smash':keys.has('KeyL')?'drop':keys.has('KeyJ')?'clear':null;return {move,jump:edges.has('Space')||edges.has('KeyK'),shot};}
+  // Two-axis footwork: move walks along the court, side walks across it (up and down
+  // on screen). Forward is the front line, so ArrowDown / S adds lane and ArrowUp / W
+  // subtracts it.
+  function input(){const move=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA')),side=Number(keys.has('ArrowDown')||keys.has('KeyS'))-Number(keys.has('ArrowUp')||keys.has('KeyW'));let shot=edges.has('KeyE')?'special':keys.has('KeyH')?'smash':keys.has('KeyL')?'drop':keys.has('KeyJ')?'clear':null;return {move,side,jump:edges.has('Space')||edges.has('KeyK'),shot};}
   function events(){for(const event of match.events.splice(0)){sound.event(event);if(event.type==='point')$('#bd-live').textContent=(event.side?'AI':'You')+' scored. '+match.score[0]+' to '+match.score[1]+'. '+event.reason;if(event.type==='finish'){record.matches++;if(event.winner===0)record.wins++;record.bestRally=Math.max(record.bestRally,match.bestRally);try{localStorage.setItem('pq-badminton-records',JSON.stringify(record));}catch{}updateRecord();$('#bd-live').textContent=(event.winner===0?'You win.':'AI wins.')+' Final score '+match.score.join(' to ');showDialog('finished');}}}
   function rectangle(c,x,y,w,h,color){c.fillStyle=color;c.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
   const background=document.createElement('canvas');background.width=480;background.height=270;const bg=background.getContext('2d');
@@ -86,23 +89,33 @@
   }createCourt();
   function rect(x,y,w,h,c){rectangle(ctx,x,y,w,h,c);}
   function text(s,x,y,size=8,color='#eee9cf',align='left'){ctx.font='bold '+size+'px monospace';ctx.textAlign=align;ctx.fillStyle=color;ctx.fillText(s,Math.round(x),Math.round(y));}
+  // Lateral footwork reads as the vertical axis on screen: the court is drawn as a
+  // side view, so its 30 px width band sits between the two sidelines below the net.
+  // lane 0 is the back line, lane 1 the front line, and y stays the height axis.
+  const LANE_BACK=222,LANE_FRONT=252;
+  const laneOf=p=>(p.z===undefined ? 0.5 : p.z);
+  const footY=p=>LANE_BACK+(LANE_FRONT-LANE_BACK)*laneOf(p)+(p.y-COURT.floor);
   function drawNet(){
     const top=COURT.netTop;for(let x=235;x<247;x+=3)rect(x,top+2,1,COURT.floor-top-2,'#a9c6ad88');for(let y=top+4;y<COURT.floor;y+=4)rect(235,y,12,1,'#c5d6baaa');rect(233,top,15,3,'#fff1ce');rect(240,top-1,2,COURT.floor-top+1,'#405965');rect(239,220,5,5,'#294a4e');rect(240,top,1,COURT.floor-top-4,'#bdd3bd');
   }
   const racket=document.createElement('canvas');racket.width=15;racket.height=28;const rc=racket.getContext('2d');
   for(let y=0;y<17;y++)for(let x=0;x<13;x++){const v=((x-6)/5.5)**2+((y-8)/7.5)**2;if(v>.69&&v<1.15)rectangle(rc,x+1,y,1,1,'#e7d7a6');else if(v<=.69&&(x%3===0||y%3===0))rectangle(rc,x+1,y,1,1,'#9bbab5');}rectangle(rc,7,17,2,5,'#8eab9e');rectangle(rc,7,22,2,6,'#e47b53');
   function drawPlayer(p,active){
-    const moving=Math.abs(p.vx)>15,pose=basePose(p,moving),rows=sportArt[pose],scale=41/rows.length,width=Math.max(...rows.map(r=>r.length))*scale,dir=p.side?-1:1;
-    rect(p.x-12,COURT.floor+2,24,3,'#21483c77');
-    if(p.boost>0)for(let i=0;i<3;i++)rect(p.x-dir*(15+i*7),p.y-18+i*5,5,2,'#b9f9ff88');
+    const moving=Math.abs(p.vx)>15,pose=basePose(p,moving),rows=sportArt[pose],fy=footY(p),
+      // A touch smaller at the back line, a touch larger at the front line, so the
+      // lateral axis reads as depth. The default lane keeps the original size.
+      scale=41/rows.length*(.94+.12*laneOf(p)),width=Math.max(...rows.map(r=>r.length))*scale,dir=p.side?-1:1;
+    rect(p.x-12,fy+2,24,3,'#21483c77');
+    if(p.boost>0)for(let i=0;i<3;i++)rect(p.x-dir*(15+i*7),fy-18+i*5,5,2,'#b9f9ff88');
     if(!p.ground){
-      if(p.character==='dora'){rect(p.x,p.y-47,1,6,'#e6b24d');const span=[10,5,2,5][Math.floor(clock*30)%4];rect(p.x-span,p.y-49,span*2,2,'#ffda6e');}
+      if(p.character==='dora'){rect(p.x,fy-47,1,6,'#e6b24d');const span=[10,5,2,5][Math.floor(clock*30)%4];rect(p.x-span,fy-49,span*2,2,'#ffda6e');}
     }
-    sprite(ctx,pose,p.x-width/2,p.y-41+(p.ground?Math.sin(clock*4)*.5:0),p.side===1,scale,assets.colors[p.character]||{});
+    // Anchor the sprite to the feet, so the depth scale never lifts or sinks the contact point.
+    sprite(ctx,pose,p.x-width/2,fy-rows.length*scale+(p.ground?Math.sin(clock*4)*.5:0),p.side===1,scale,assets.colors[p.character]||{});
     const swing=p.animation>0?1-p.animation/.28:0,angle=p.animation>0?(-1.5+swing*3.1):-.3+Math.sin(clock*3)*.07;
-    ctx.save();ctx.translate(Math.round(p.x+dir*13),Math.round(p.y-22));ctx.scale(dir,1);ctx.rotate(angle);ctx.drawImage(racket,1,-27);ctx.restore();
-    if(p.animation>0){for(let i=0;i<4;i++)rect(p.x+dir*(16+i*5),p.y-35+Math.sin(i+clock*25)*10,2,2,p.shot==='special'?colors[p.character]:'#f8efbe');}
-    if(active&&p.swing>0)rect(p.x-2,p.y-47,4,2,'#fff4b2');
+    ctx.save();ctx.translate(Math.round(p.x+dir*13),Math.round(fy-22));ctx.scale(dir,1);ctx.rotate(angle);ctx.drawImage(racket,1,-27);ctx.restore();
+    if(p.animation>0){for(let i=0;i<4;i++)rect(p.x+dir*(16+i*5),fy-35+Math.sin(i+clock*25)*10,2,2,p.shot==='special'?colors[p.character]:'#f8efbe');}
+    if(active&&p.swing>0)rect(p.x-2,fy-47,4,2,'#fff4b2');
   }
   function drawShuttle(b){
     if(b.trail)for(let i=0;i<b.trail.length;i++){const t=b.trail[i];rect(t.x,t.y,1+i/4,1+i/4,b.skill?b.skill.color+'99':'#e9ebc133');}
@@ -111,7 +124,8 @@
   function draw(){
     ctx.setTransform(2,0,0,2,0,0);ctx.imageSmoothingEnabled=false;ctx.drawImage(background,0,0);
     const display=match||attract;
-    for(const p of display.players)drawPlayer(p,!!match);
+    // Back lane first, front lane last, so the nearer player overlaps the far one.
+    for(const p of [...display.players].sort((a,b)=>laneOf(a)-laneOf(b)))drawPlayer(p,!!match);
     drawNet();drawShuttle(display.shuttle);
     for(const p of display.particles||[])rect(p.x,p.y,2,2,p.color);
     rect(10,7,460,38,'#132d35ee');rect(10,44,460,1,'#698f7a');
@@ -122,7 +136,7 @@
       for(const p of match.players){const x=p.side?330:21;
         if(match.special){text('E / '+Math.round(p.meter)+'%'+(p.skillCooldown>0?' · '+Math.ceil(p.skillCooldown)+'s':''),x,258,6,p.meter>=100&&p.skillCooldown===0?'#ffe3a2':'#bdd8c8');rect(x,261,126,3,'#173f40');rect(x,261,126*p.meter/100,3,colors[p.character]);}
       }
-      if(match.phase==='serve'){const p=match.players[match.server];text('▼',p.x,p.y-60,10,'#f9d77f','center');text(match.server?'AI SERVING…':'J TO SERVE',240,89,10,'#fff0bc','center');}
+      if(match.phase==='serve'){const p=match.players[match.server];text('▼',p.x,footY(p)-60,10,'#f9d77f','center');text(match.server?'AI SERVING…':'J TO SERVE',240,89,10,'#fff0bc','center');}
       if(match.phase==='point'){rect(142,74,196,23,'#16393bdc');text(match.message,240,90,10,'#ffe0a0','center');}
       else if(match.messageTime>0&&match.phase==='rally'&&match.shuttle.skill){text(match.message,240,84,8,match.shuttle.skill.color,'center');}
       if(match.phase==='finished'&&match.winner===0)for(let i=0;i<24;i++){const x=(i*79)%480,y=(clock*27+i*21)%180;rect(x,y,2,3,['#ffd77b','#c1e6b5','#eea6ab'][i%3]);}
