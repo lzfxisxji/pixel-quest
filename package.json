@@ -1,0 +1,1 @@
+{"name":"super-pixel-quest","version":"1.0.0","private":true,"scripts":{"start":"node server.js","dev":"node server.js --dev","check":"node --check game.js && node --check character-assets.js && node --check badminton-core.js && node --check badminton.js","test":"node test-game.cjs && node test-badminton.cjs"}}

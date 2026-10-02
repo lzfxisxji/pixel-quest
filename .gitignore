@@ -1,0 +1,10 @@
+# Agent scratch space and local notes — not part of the game.
+.workbuddy/
+
+# No dependencies are installed for this project; ignore any that appear.
+node_modules/
+
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
