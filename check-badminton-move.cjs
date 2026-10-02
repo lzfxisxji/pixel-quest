@@ -49,7 +49,7 @@ const angle=(a,b)=>Math.acos(Math.max(-1,Math.min(1,(a.x*b.x+a.y*b.y)/(Math.hypo
   // One side-by-side proof sheet: the two extremes of the court width, cropped around the
   // player, against the fixed court lines -- so the diagonal shuffle is unmistakable.
   const proofSheet=(down,up)=>evaluate(`(async()=>{const load=src=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src;});const [a,b]=await Promise.all([load(${JSON.stringify(down)}),load(${JSON.stringify(up)})]);
-    const sx=120,sy=250,sw=400,sh=280,z=2,c=document.createElement('canvas');c.width=sw*z;c.height=sh*z*2+26;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    const sx=120,sy=188,sw=300,sh=300,z=2,c=document.createElement('canvas');c.width=sw*z;c.height=sh*z*2+26;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
     g.fillStyle='#10242a';g.fillRect(0,0,c.width,c.height);
     g.drawImage(a,sx,sy,sw,sh,0,22,sw*z,sh*z);g.drawImage(b,sx,sy,sw,sh,0,sh*z+26,sw*z,sh*z);
     g.font='bold 13px monospace';g.fillStyle='#ffe0a0';g.fillText('ARROW DOWN  \\u00b7  FRONT LINE  \\u00b7  LANE 1.00',10,15);
