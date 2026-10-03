@@ -36,7 +36,7 @@ async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;w
   const press=async(code,key,vk)=>{await send('Input.dispatchKeyEvent',{type:'rawKeyDown',code,key,windowsVirtualKeyCode:vk});await send('Input.dispatchKeyEvent',{type:'keyUp',code,key,windowsVirtualKeyCode:vk});await sleep(160);};
   // Wait for the stylesheet to be applied (the Google Fonts import can delay it) and page load to settle.
   const load=async url=>{await send('Page.navigate',{url});await waitFor(()=>evaluate("document.readyState==='complete'"),'readyState for '+url);await waitFor(()=>evaluate("getComputedStyle(document.querySelector('.cabinet')).borderTopWidth==='1px'&&document.querySelector('.screen').getBoundingClientRect().height>150"),'laid-out page for '+url);await sleep(250);};
-  const menuState=()=>evaluate(`(()=>{const row=document.querySelector('#mode-actions'),adv=document.querySelector('#play'),bad=document.querySelector('#play-badminton');const r=row.getBoundingClientRect(),a=adv.getBoundingClientRect(),b=bad.getBoundingClientRect();return {playMode:PixelQuest.state,overlayHidden:document.querySelector('#overlay').hidden,rowVisible:r.height>1,adventureLabel:adv.textContent.trim(),badmintonLabel:bad.textContent.trim(),badmintonHidden:bad.hidden,adventureVisible:a.height>1&&a.width>1,badmintonVisible:b.height>1&&b.width>1,sideBySide:Math.abs(a.top-b.top)<2&&b.left>a.right-2};})()`);
+  const menuState=()=>evaluate(`(()=>{const row=document.querySelector('#mode-actions'),adv=document.querySelector('#play'),bad=document.querySelector('#play-badminton'),kart=document.querySelector('#play-kart');const r=row.getBoundingClientRect(),a=adv.getBoundingClientRect(),b=bad.getBoundingClientRect(),k=kart.getBoundingClientRect();return {playMode:PixelQuest.state,overlayHidden:document.querySelector('#overlay').hidden,rowVisible:r.height>1,adventureLabel:adv.textContent.trim(),badmintonLabel:bad.textContent.trim(),kartLabel:kart.textContent.trim(),badmintonHidden:bad.hidden,kartHidden:kart.hidden,adventureVisible:a.height>1&&a.width>1,badmintonVisible:b.height>1&&b.width>1,kartVisible:k.height>1&&k.width>1,sideBySide:Math.abs(a.top-b.top)<2&&Math.abs(a.top-k.top)<2&&b.left>a.right-2&&k.left>b.right-2,threeInOneRow:k.left<=r.right+1&&k.right<=r.right+1};})()`);
   const shot=async name=>fs.writeFileSync(path.join(__dirname,name),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).data,'base64'));
 
   try{
@@ -50,7 +50,8 @@ async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;w
     let menu=await menuState();
     assert.equal(menu.playMode,'title');assert.equal(menu.overlayHidden,false);assert(menu.rowVisible,'the mode row is in the main menu');
     assert.equal(menu.adventureLabel,'ADVENTURE ▶');assert.equal(menu.badmintonLabel,'BADMINTON ▶');
-    assert(menu.adventureVisible&&menu.badmintonVisible,'both mode buttons are visible');assert(menu.sideBySide,'the modes sit side by side');
+    assert(menu.adventureVisible&&menu.badmintonVisible&&menu.kartVisible,'all three mode buttons are visible');
+    assert(menu.sideBySide,'the modes sit side by side');assert(menu.threeInOneRow,'all three modes share one row');
     assert.equal(menu.badmintonHidden,false);
     await shot('preview-mode-select.png');
     console.log('PASS main menu offers ADVENTURE and BADMINTON side by side');
@@ -72,7 +73,7 @@ async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;w
     await waitFor(()=>evaluate("PixelQuest.state==='title'"),'back on the main menu');
     menu=await menuState();
     assert.equal(menu.overlayHidden,false);assert.equal(menu.badmintonHidden,false);
-    assert(menu.adventureVisible&&menu.badmintonVisible&&menu.sideBySide);
+    assert(menu.adventureVisible&&menu.badmintonVisible&&menu.kartVisible&&menu.sideBySide);
     console.log('PASS RETURN HOME restores the main menu with both modes');
 
     // 6. Enter on the focused Badminton button starts Badminton Mode.
@@ -102,14 +103,14 @@ async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;w
     await waitFor(()=>evaluate("typeof PixelQuest==='object'&&PixelQuest.state==='title'"),'main menu state');
     menu=await menuState();
     assert.equal(menu.overlayHidden,false);assert.equal(menu.badmintonHidden,false);
-    assert(menu.adventureVisible&&menu.badmintonVisible,'the main menu is fully restored after a match');
+    assert(menu.adventureVisible&&menu.badmintonVisible&&menu.kartVisible,'the main menu is fully restored after a match');
     console.log('PASS BACK TO PIXEL QUEST from a live match returns to the main menu');
 
     // 9. The mode row still fits a phone-sized game screen without horizontal overflow.
     await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:2,mobile:true});
     await sleep(450);
     const phone=await evaluate(`(()=>{const row=document.querySelector('#mode-actions'),content=document.querySelector('.overlay-content'),s=document.querySelector('.screen');const w=row.getBoundingClientRect(),c=content.getBoundingClientRect(),r=s.getBoundingClientRect();return {fits:w.left>=r.left-1&&w.right<=r.right+1,contentFits:c.top>=r.top-1&&c.bottom<=r.bottom+1,overflow:document.documentElement.scrollWidth>innerWidth+1,buttons:[...row.querySelectorAll('button')].filter(b=>b.getBoundingClientRect().height>1).length,screenHeight:Math.round(r.height),contentHeight:Math.round(c.height)};})()`);
-    assert.equal(phone.buttons,2,'both modes stay visible on a phone');
+    assert.equal(phone.buttons,3,'all three modes stay visible on a phone');
     assert(!phone.overflow,'no horizontal overflow on a phone viewport');
     assert(phone.fits,'the mode row fits the phone game screen');
     assert(phone.contentFits,'main menu fits the phone game screen (content '+phone.contentHeight+'px in '+phone.screenHeight+'px)');
@@ -125,8 +126,63 @@ async function waitFor(fn,label,timeout=20000){const start=Date.now();let last;w
     assert(!land.overflow,'no horizontal overflow on a landscape phone');
     console.log('PASS the mode row fits an 844x390 landscape phone');
 
+    // 11. PIXEL KART is reachable from the menu, loads its own page, and the
+    // other two modes' pages link to it - the three modes share no engine code.
+    await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+    await sleep(300);
+    await load(SITE);
+    const modeButtons=await evaluate(`(()=>[...document.querySelectorAll('#mode-actions button')].filter(b=>!b.hidden).map(b=>b.id))()`);
+    assert.deepEqual(modeButtons,['play','play-badminton','play-kart'],'the menu offers all three modes in order');
+    console.log('PASS the main menu offers Adventure, Badminton and Pixel Kart');
+
+    // Keyboard Enter on a focused PIXEL KART button must launch it, exactly as it
+    // does for BADMINTON.
+    await evaluate(`document.querySelector('#play-kart').focus()`);
+    await press('Enter','Enter',13);
+    await sleep(2200);
+    const kartPage=await evaluate(`JSON.stringify({path:location.pathname.split('/').pop(),
+      booted:typeof window.PixelKart!=='undefined',
+      setup:!!document.querySelector('#kart-setup')&&!document.querySelector('#kart-setup').hidden,
+      tracks:[...document.querySelectorAll('#kart-tracks button')].length,
+      drivers:[...document.querySelectorAll('#kart-chars button')].length,
+      difficulties:[...document.querySelectorAll('#kart-difficulty button')].length,
+      loadsAdventure:typeof window.PixelQuest!=='undefined',
+      loadsBadminton:typeof window.PixelBadminton!=='undefined'})`);
+    const k=JSON.parse(kartPage);
+    assert.equal(k.path,'kart.html','PIXEL KART opens its own page');
+    assert(k.booted,'the Pixel Kart engine boots');
+    assert(k.setup,'the setup screen is shown');
+    assert.equal(k.tracks,3,'three circuits are offered');
+    assert.equal(k.drivers,6,'all six characters are offered');
+    assert.equal(k.difficulties,3,'three AI difficulties are offered');
+    assert(!k.loadsAdventure,'Pixel Kart does not load the Adventure engine');
+    assert(!k.loadsBadminton,'Pixel Kart does not load the Badminton engine');
+    console.log('PASS PIXEL KART is independent: its own page, engine, 3 circuits, 6 drivers');
+    await shot('preview-kart-setup.png');
+
+    // Coming back from Pixel Kart restores a working main menu.
+    await evaluate(`document.querySelector('#kart-exit').click()`);
+    await waitFor(()=>evaluate("window.PixelQuest&&PixelQuest.state==='title'"),'back on the main menu from Pixel Kart');
+    const backHome=await evaluate(`JSON.stringify({path:location.pathname.split('/').pop(),state:window.PixelQuest&&PixelQuest.state,overlay:!document.querySelector('#overlay').hidden})`);
+    const bh=JSON.parse(backHome);
+    assert.equal(bh.path,'index.html','BACK TO PIXEL QUEST returns to the main menu');
+    assert.equal(bh.state,'title','the main menu title screen is restored');
+    assert(bh.overlay,'the main menu overlay is visible again');
+    console.log('PASS BACK TO PIXEL QUEST returns to a working main menu');
+
+    // Both other pages link to Pixel Kart, so the mode is reachable from anywhere.
+    for(const page of ['badminton.html','kart.html']){
+      await load(SITE+page);
+      const links=await evaluate(`JSON.stringify([...document.querySelectorAll('.mode-switch a,.mode-switch .active-mode')].map(e=>e.textContent.trim().split(/\\s{2,}|NEW/)[0].trim()))`);
+      const l=JSON.parse(links);
+      assert(l.some(t=>/ADVENTURE/i.test(t)),page+' links back to Adventure');
+      assert(l.some(t=>/SHUTTLE CLUB/i.test(t)),page+' links to Shuttle Club');
+      assert(l.some(t=>/PIXEL KART/i.test(t)),page+' links to Pixel Kart');
+    }
+    console.log('PASS every mode page links to all three modes');
+
     assert.deepEqual(errors,[]);console.log('PASS no browser runtime errors');
-    console.log('All 10 main-menu integration checks passed.');
+    console.log('All 15 main-menu integration checks passed.');
   } finally {
     try{ws.close();}catch{}
     if(chrome.pid)spawnSync('taskkill',['/PID',String(chrome.pid),'/T','/F'],{stdio:'ignore'});

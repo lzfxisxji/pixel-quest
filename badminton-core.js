@@ -3,10 +3,18 @@
   'use strict';
   // 13.4 m singles length mapped to 376 px; 1.55 m net is approximately 44 px.
   const COURT=Object.freeze({left:52,right:428,net:240,netTop:180,floor:224});
+  /* Easy is deliberately a beginner to play against. Beyond being slower and
+     less accurate, it commits visible mistakes on a timer: it misreads the
+     shuttle, wanders to the wrong place, or simply does not swing. Those
+     windows are scheduled rather than rolled per frame, so a fumble reads as a
+     beat the player can notice and punish instead of jitter. `sloppy` widens the
+     aim error, `fumble` is the chance per decision of a mistake, and `fumbleFor`
+     how long one lasts in seconds. Medium and hard keep `fumble:0`, so nothing
+     about the other two settings changes. */
   const DIFFICULTIES=Object.freeze({
-    easy:{speed:85,reaction:.32,error:38,jumpChance:.25},
-    medium:{speed:111,reaction:.17,error:20,jumpChance:.65},
-    hard:{speed:137,reaction:.075,error:7,jumpChance:1}
+    easy:{speed:74,reaction:.52,error:54,jumpChance:.18,sloppy:1.9,fumble:.34,fumbleFor:[.5,1.1]},
+    medium:{speed:111,reaction:.17,error:20,jumpChance:.65,sloppy:1,fumble:0,fumbleFor:[0,0]},
+    hard:{speed:137,reaction:.075,error:7,jumpChance:1,sloppy:1,fumble:0,fumbleFor:[0,0]}
   });
   const ABILITIES=Object.freeze({
     explorer:{name:'Firebird clear',description:'A deep, blazing clear with a fast opening burst.',color:'#ff9b55',vy:-230,drag:.0030,target:'back'},
@@ -69,7 +77,7 @@
     get config(){return DIFFICULTIES[this.options.difficulty]||DIFFICULTIES.medium;}
     get special(){return this.options.mode==='special';}
     resetRally(){
-      this.phase='serve';this.timer=0;this.rally=0;this.aiClock=0;this.aiTarget=344;this.aiLane=.5;this.aiAttempt=0;
+      this.phase='serve';this.timer=0;this.rally=0;this.aiClock=0;this.aiTarget=344;this.aiLane=.5;this.aiAttempt=0;this.aiMistake=0;this.aiMistakeWait=1.4;
       for(const p of this.players){p.x=p.side?344:136;p.y=COURT.floor;p.vx=0;p.vy=0;p.z=.5;p.vz=0;p.ground=true;p.jumpVisual=false;p.swing=0;p.cooldown=0;}
       this.shuttle={x:0,y:0,z:.5,vx:0,vy:0,vz:0,drag:.0045,lastHitter:null,trail:[],skill:null,live:false};
       this.attachServe();this.message=this.server?'AI SERVING…':'YOUR SERVE · J TO START';this.messageTime=2;
@@ -136,25 +144,46 @@
       const p=this.players[1],b=this.shuttle,c=this.config;
       if(this.phase==='serve'){if(this.server&&this.timer>.95)this.serve();return {move:0};}
       if(this.phase!=='rally')return {move:0};
+      /* Schedule mistakes well ahead of time on their own clock. Rolling this
+         per frame would make every frame a coin toss and the AI would merely
+         look noisy; on a timer each mistake is a beat long enough to read. */
+      this.aiMistakeWait-=dt;
+      if(this.aiMistake>0)this.aiMistake-=dt;
+      else if(c.fumble>0&&this.aiMistakeWait<=0&&b.lastHitter===0){
+        if(this.random()<c.fumble){
+          this.aiMistake=c.fumbleFor[0]+this.random()*(c.fumbleFor[1]-c.fumbleFor[0]);
+          this.events.push({type:'aiMistake',side:1});
+        }else this.aiMistakeWait=1.1+this.random()*1.9;
+      }
+      const fumbling=this.aiMistake>0;
       this.aiClock-=dt;
       if(this.aiClock<=0){
-        this.aiClock=c.reaction;
+        /* A fumbled AI re-reads the shuttle late and gets the wrong picture of
+           it, so both the reaction delay and the aim error grow. */
+        this.aiClock=c.reaction*(fumbling?2.1:1);
         if(b.lastHitter===0){
           const path=flight(b);let intercept=path.find(q=>q.y>=COURT.floor-42&&q.y>b.y&&q.x>COURT.net);
           if(!intercept)intercept=path[path.length-1];
-          this.aiTarget=clamp(intercept.x-10+(this.random()-.5)*c.error*.4,COURT.net+23,COURT.right-10);
+          const err=c.error*.4*c.sloppy*(fumbling?2.6:1);
+          let aim=intercept.x-10+(this.random()-.5)*err;
+          if(fumbling&&this.random()<.5)aim=COURT.net+26+this.random()*(COURT.right-COURT.net-52);
+          this.aiTarget=clamp(aim,COURT.net+23,COURT.right-10);
           // Cover the lane the shuttle is actually coming down in, so the AI's footwork
           // reads on the same cross-court axis the player uses.
-          this.aiLane=clamp(intercept.z??.5,0,1);
+          this.aiLane=clamp((intercept.z??.5)+(fumbling?(this.random()-.5)*.5:0),0,1);
         }else{this.aiTarget=338;this.aiLane=.5;}
       }
+      // A fumbled AI also drifts, rather than standing still and looking broken.
+      if(fumbling&&this.random()<dt*1.6)this.aiLane=clamp(this.aiLane+(this.random()-.5)*.4,0,1);
       const movement=Math.abs(this.aiTarget-p.x)>6?Math.sign(this.aiTarget-p.x):0;
       const lateral=Math.abs(this.aiLane-p.z)>.02?Math.sign(this.aiLane-p.z):0;
       let jump=false;
       if(b.lastHitter===0&&Math.abs(b.x-p.x)<70&&b.y<158&&b.vy>0&&p.ground&&this.random()<c.jumpChance*dt*12)jump=true;
       if(b.lastHitter===0&&this.inReach(p)&&p.cooldown<=0){
         this.aiAttempt+=dt;
-        if(this.aiAttempt>c.reaction*.42){
+        // The swing threshold is how long the AI "considers" the ball. A fumbled
+        // AI hesitates well past that, so the shuttle can simply land.
+        if(this.aiAttempt>c.reaction*.42*(fumbling?5.5:1)){
           let shot=!p.ground&&b.y<155?'smash':this.players[0].x<160?'drop':'clear';
           if(this.special&&p.meter>=100&&p.skillCooldown<=0&&this.random()<.7)shot='special';
           this.requestSwing(1,shot);this.aiAttempt=0;

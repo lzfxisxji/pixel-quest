@@ -24,7 +24,7 @@ To run it on your own machine, open `index.html` directly in a modern browser, o
 | Restart adventure | R |
 | Mute | M |
 
-The main menu (the title screen inside the arcade cabinet) offers two modes: **ADVENTURE** and **BADMINTON**. ADVENTURE opens the character selector, choose a character, then start. Left / Right selects a card and Enter confirms. Continue Adventure resumes the saved character directly. Touch devices get movement, run, jump, and fire buttons. Fullscreen and audio controls are above the game. Browser audio begins after an input gesture.
+The main menu (the title screen inside the arcade cabinet) offers three modes: **ADVENTURE**, **BADMINTON** and **PIXEL KART**. ADVENTURE opens the character selector, choose a character, then start. Left / Right selects a card and Enter confirms. Continue Adventure resumes the saved character directly. Touch devices get movement, run, jump, and fire buttons. Fullscreen and audio controls are above the game. Browser audio begins after an input gesture.
 
 Returning home saves the current world, score, lives, character, and powers. CONTINUE ADVENTURE starts that world again from its beginning. Cancel returns to pause without changing the run.
 
@@ -82,3 +82,39 @@ Everything follows from that one projection. Sprites are anchored at the feet an
 Run `npm run check` and `npm test`. The badminton tests cover physics, faults, service, movement, pause, match end, all six abilities, complete 11-point matches for all six characters in both formats, and the 2.5D projection itself — that the camera frames the whole court clear of the score bar, that the four footwork directions are four different screen directions, that sprites scale with distance, and that the metric bridge to the old simulation kept the net at 1.55 m and the floor at zero. Browser acceptance also checks real UI interactions, mobile layout, result/record updates and adventure-save isolation.
 
 The previous side-view badminton mode is preserved byte-for-byte in `backup/badminton-side-view/` (also tagged `badminton-side-view` in git) if you want to compare or roll back.
+
+The Badminton **Relaxed** AI is deliberately beatable. Its reaction delay is three times Competitive's (0.52s against 0.17s), it aims with 2.7x the placement error, it moves at two-thirds of the speed, and it jumps on only 18% of shots against 65%. It also makes timed visible mistakes: with a 34% chance per decision window it will, for half a second to a second at a time, aim at the wrong half of the court, drift out of its lane and hesitate over its swing, and its reaction is doubled for the duration. Competitive and Ruthless make no mistakes at all.
+
+# Pixel Kart — independent kart racing mode
+
+Open `http://localhost:4173/kart.html`, or choose **PIXEL KART** on the Pixel Quest main menu. It is a third standalone page: it loads neither the adventure nor the badminton engine, shares no game state and no save key with either, and the other two modes are unchanged.
+
+| Control | Key |
+| --- | --- |
+| Accelerate | Up / W / Space |
+| Brake, reverse | Down / S |
+| Steer | Left / Right, or A / D |
+| Drift | Shift or J, through a corner |
+| Use item | Enter / L / U |
+| Pause | P |
+
+Pick one of the six characters as your driver, one of three circuits and one of three AI difficulties, then **START RACE**. Every race is five karts over two laps: you plus four AI, each in a different character's kart.
+
+**Circuits.** *Sunrise Meadow* is long and open with room to drift. *Old Harbour* is tighter, with a narrow 33px half-width causeway that punishes late braking. *Neon Ridge* is the fastest of the three with a technical middle section. Every circuit is a generated closed loop — the shape is built from a star-shaped polar skeleton, smoothed with a centripetal Catmull-Rom spline, and resampled at a uniform 4px of arc length, so there are no cusps, no self-intersections and no fake hairpins from uneven sample spacing. The build refuses to produce a circuit it cannot measure: it checks that the tightest corner still has enough clear tarmac on the inside, and that separate stretches of the loop never pass too close together to be distinguishable.
+
+**Driving.** Top speed is 330px/s on tarmac and 62% of that in the grass, so running wide costs real time. Hold Shift or J into a corner to drift: the kart's velocity separates from its heading, it slides, lays skid marks and throws sparks, and a longer slide pays a bigger boost on exit. Braking distance is planned backwards around the whole lap, so the speed limit at any point is the fastest the *rest* of the circuit still allows.
+
+**Power-ups** are drawn at random, with the odds biased to what is useful: the leader is more likely to get defence, the back marker more likely to get a boost.
+
+- **Banana** — dropped behind you for the pack to hit.
+- **Ink** — dropped on the racing line; the kart that drives into it is partially blind for 1.6 seconds.
+- **Lightning** — shrinks every rival for a while.
+- **Boost** — a straight speed surge.
+- **Shell** — a shield that absorbs one hit.
+
+**AI.** The four opponents aim at a point on the racing line ahead, brake for what is coming, avoid hazards in a forward cone, drift through the corners worth sliding at, and make timed mistakes on the easier tiers. Each AI owns a private random stream for its own decisions, so a field is reliably slower on Relaxed than the same field on Ruthless. Measured over four seeds per circuit, the hard field spends 1.3% of a lap on Sunrise Meadow, 4.3% on Old Harbour and 3.9% on Neon Ridge in the grass.
+
+**Files.** `kart-tracks.js` owns the circuit geometry and is the single source of truth for everything positional — the racing line, the corner speed limits, item box placement and the spatial hash all read from it. `kart-assets.js` bakes every kart in 16 headings, drawn in code with the driver seated in the vehicle; there are no image files. `kart-core.js` owns the race simulation, physics, AI and power-ups. `kart.js` owns rendering, audio, input and the camera.
+
+**Tests.** `node test-kart.cjs` is 34 headless acceptance checks over geometry, physics, drifting, the AI, power-ups and lap counting. `node soak-kart.cjs` runs 54 full races across every circuit and difficulty and asserts none of them hangs, strands a kart, loses a kart or produces an impossible lap. `node check-kart.cjs` drives real Chrome over the DevTools protocol for the 16 things that only exist in a browser: that the page boots alone, that the track is genuinely painted, that all six drivers are visibly seated in their karts, that a drift really slides and lays marks, that a full two-lap race reaches the results screen, and that leaving the mode returns to a main menu where all three modes still work. `npm run verify` runs all six suites — 146 checks in total.
+

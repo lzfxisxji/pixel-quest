@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#171326"><title>Pixel Kart — Pixel Quest Racing</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23e2574c'/%3E%3Ctext x='6' y='25' font-size='22'%3E%F0%9F%8E%80%3C/text%3E%3C/svg%3E"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="kart.css"></head>
+<body class="kart-page" data-home="index.html"><main>
+<header><a class="brand" href="./index.html"><span class="brand-icon">✦</span> PIXEL QUEST <small>ARCADE CLUB / 003</small></a><div class="header-right"><span class="live-dot"></span><span>FIVE KARTS. ONE PODIUM.</span></div></header>
+<section class="heading"><div><div class="eyebrow">SIX HEROES. FIVE KARTS. TWO LAPS.</div><h1>Floor it<br>to the <span>flag.</span></h1></div><p>Drift the apex, grab an item, leave them in the dust.<span class="edition">1 PLAYER + 4 AI · 3 CIRCUITS · 2 LAPS</span></p></section>
+<nav class="mode-switch" aria-label="Game modes"><a href="./index.html">★ ADVENTURE</a><a href="./badminton.html">↗ SHUTTLE CLUB</a><span class="active-mode">🏁 PIXEL KART <span>NEW</span></span></nav>
+<section class="cabinet kart-cabinet"><div class="cabinet-top"><span><i></i> PIXEL KART GRAND PRIX</span><span id="kart-stage">PICK YOUR DRIVER</span><div><button id="kart-pause" aria-label="Pause race">Ⅱ</button><button id="kart-fullscreen" aria-label="Fullscreen">⛶</button></div></div>
+<div id="kart-screen" class="screen kart-screen" data-phase="setup">
+<canvas id="kart" width="960" height="540" tabindex="0" aria-label="Pixel Kart race. Arrow keys or A and D steer, W or Up accelerates, S or Down brakes, Shift or J drifts, Enter or L uses an item, P pauses."></canvas>
+<div id="kart-view" class="kart-viewport">
+<div id="kart-hud" class="kart-hud" hidden></div>
+<div id="kart-setup" class="kart-setup">
+<div class="kart-setup-head"><div><span class="kart-kicker">WELCOME TO THE GRAND PRIX</span><h2>Six heroes. One grid.</h2></div><span class="kart-format">1 PLAYER<br>4 AI · 2 LAPS</span></div>
+<div class="kart-setup-body">
+<div class="kart-setup-left">
+<div class="kart-section-label"><span>01 / YOUR DRIVER</span><span id="kart-char-name">PIXEL EXPLORER</span></div>
+<div id="kart-chars" class="kart-chars" role="group" aria-label="Choose your driver"></div>
+<div class="kart-section-label"><span>02 / DIFFICULTY</span><span id="kart-diff-name">COMPETITIVE</span></div>
+<div id="kart-difficulty" class="kart-segments" role="group" aria-label="Choose AI difficulty"></div>
+<p id="kart-diff-copy" class="kart-copy">Four rivals who drive hard but drive clean.</p>
+<div class="kart-tip"><span>DRIFTING</span><p>Hold <b>SHIFT</b> through a corner. The longer the slide, the bigger the boost when you straighten up - a tap gives a nudge, a committed corner gives a launch.</p></div>
+<div class="kart-tip"><span>ITEMS</span><p>Banana and Ink drop behind you as a trap. Lightning hits every rival at once. Boost is pure speed. Drive well and you will be handed the good stuff.</p></div>
+</div>
+<div class="kart-setup-right">
+<div class="kart-section-label"><span>03 / CIRCUIT</span><span>3 TRACKS</span></div>
+<div id="kart-tracks" class="kart-tracks" role="group" aria-label="Choose a circuit"></div>
+<div class="kart-preview-wrap"><canvas id="kart-preview" width="208" height="120" aria-label="Preview of the selected circuit"></canvas></div>
+</div>
+</div>
+<div class="kart-setup-bottom"><span class="kart-setup-note">Boxes give random items · hold drift through corners for a boost</span><button id="kart-go" class="kart-primary">START RACE <span>▶</span></button></div>
+</div>
+<div id="kart-overlay" class="kart-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="kart-result-title">
+<div class="kart-modal" data-kind="results" hidden><span class="kart-kicker" id="kart-result-kicker">CHEQUERED FLAG</span><h2 id="kart-result-title">RACE OVER</h2><div id="kart-result"></div><div class="kart-modal-actions"><button id="kart-rematch" class="kart-primary">REMATCH <span>▶</span></button><button id="kart-change" class="kart-secondary">CHANGE SETUP</button><button id="kart-exit" class="kart-text-button">BACK TO PIXEL QUEST</button></div></div>
+<div class="kart-modal" data-kind="paused" hidden><span class="kart-kicker">TAKE A BREATHER</span><h2>PAUSED</h2><p>Your race is right where you left it.</p><div class="kart-modal-actions"><button id="kart-resume" class="kart-primary">KEEP RACING <span>▶</span></button><button id="kart-pause-change" class="kart-secondary">CHANGE SETUP</button><button id="kart-pause-exit" class="kart-text-button">BACK TO PIXEL QUEST</button></div></div>
+</div>
+</div>
+</div><div class="cabinet-bottom"><span><b>✦</b> HOME-GROWN PIXELS. REAL RACING.</span><span id="kart-best">BEST 0 RACES</span></div></section>
+<div class="kart-touch" aria-label="Touch race controls">
+<div class="kart-touch-steer"><button data-touch="ArrowLeft" aria-label="Steer left">◀</button><button data-touch="ArrowRight" aria-label="Steer right">▶</button></div>
+<div class="kart-touch-drive"><button data-touch="KeyL" class="kart-touch-item" aria-label="Use item">ITEM</button><button data-touch="ShiftLeft" class="kart-touch-drift" aria-label="Drift">DRIFT</button><button data-touch="ArrowDown" aria-label="Brake">▼</button><button data-touch="ArrowUp" class="kart-touch-gas" aria-label="Accelerate">▲</button></div>
+</div>
+<section class="instructions kart-instructions"><div><span class="instruction-number">01</span><div><strong>DRIVE</strong><p><kbd>W</kbd> <kbd>↑</kbd> accelerate · <kbd>S</kbd> <kbd>↓</kbd> brake<span><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> steer</span></p></div></div><div><span class="instruction-number">02</span><div><strong>DRIFT</strong><p>Hold <kbd>SHIFT</kbd> or <kbd>J</kbd> through a corner<span>Longer slide = bigger boost on exit</span></p></div></div><div><span class="instruction-number">03</span><div><strong>FIGHT IT</strong><p><kbd>ENTER</kbd> or <kbd>L</kbd> uses your item<span>Banana · Ink · Lightning · Boost</span></p></div></div></section>
+<footer><span>DRIFT · CHARGE · WIN.</span><span><kbd>P</kbd> PAUSE &nbsp; / &nbsp; <kbd>ESC</kbd> MENU</span></footer>
+</main><script src="character-assets.js"></script><script src="kart-assets.js"></script><script src="kart-tracks.js"></script><script src="kart-core.js"></script><script src="kart.js"></script></body></html>

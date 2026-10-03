@@ -1,0 +1,191 @@
+/* Pixel Kart styling. The arcade cabinet chrome comes from style.css; this file
+   only adds what is specific to racing: the pit-lane setup screen, the results
+   table, the touch pads and the red/gold identity that separates the mode from
+   Shuttle Club's teal at a glance. */
+
+/* ---- the cabinet sits a little wider than a court: a circuit needs room ---- */
+.kart-page{--gold:#f5a25d}
+.kart-page h1 span{color:#f5a25d}
+.kart-page .brand-icon{color:#f5a25d}
+.kart-page .eyebrow{color:#f5a25d}
+.kart-cabinet{width:min(100%,1180px);min-width:0}
+.kart-screen{background:#241a2e;isolation:isolate}
+.kart-screen #kart{object-fit:fill;display:block;width:100%;height:100%}
+/* The canvas is the race; everything else is a layer above it. The viewport
+   wrapper is what the setup screen and the modals are positioned against. */
+.kart-viewport{position:absolute;inset:0}
+.kart-hud{position:absolute;inset:0;pointer-events:none}
+.kart-hud[hidden]{display:none}
+
+/* ---- setup / pit lane ---- */
+/* The setup screen is a pit lane, not a HUD. Its body can be taller than a
+   phone screen, so the body scrolls while the heading and the START RACE button
+   stay put - a start button below the fold is a start button nobody finds. */
+.kart-setup{position:absolute;inset:0;background:#1d1526f2;padding:20px 26px;display:flex;flex-direction:column;color:#ece4f2;overflow:hidden}
+.kart-setup[hidden]{display:none}
+.kart-setup-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;flex:0 0 auto}
+.kart-kicker{font:8px 'Space Mono',monospace;letter-spacing:1.7px;color:#f5a25d}
+.kart-setup h2{font:bold 24px 'DM Sans',sans-serif;letter-spacing:-.7px;line-height:1.2;color:#fff3dd;margin:6px 0;text-shadow:none}
+.kart-format{font:8px/1.8 'Space Mono',monospace;text-align:right;color:#a894b4}
+/* Fixed, content-sized rows. The setup screen is laid out at its natural height
+   and the two columns simply have different depths - the right one carries the
+   circuit list and the preview, the left one the driver row and the difficulty.
+   Nothing is stretched, because stretching a six-across grid of driver chips
+   turns them into tall thin slivers. */
+.kart-setup-body{display:grid;grid-template-columns:1.35fr 1fr;gap:22px;align-items:start;
+  /* The only part allowed to scroll. The heading above and the START RACE button
+     below stay visible, so the screen never becomes taller than the cabinet. */
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.kart-setup-left,.kart-setup-right{min-width:0;display:flex;flex-direction:column}
+
+.kart-section-label{display:flex;justify-content:space-between;font:8px 'Space Mono',monospace;letter-spacing:1px;color:#a894b4;margin:0 0 8px}
+.kart-section-label span:last-child{color:#f5c98a}
+
+/* Driver chips: each shows the baked kart sprite, so you pick the car you will
+   actually drive rather than a portrait from another mode. */
+.kart-chars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.kart-chip{background:#2c2038;border:1px solid #4c3b5c;border-bottom:3px solid #150e1e;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 3px 6px;gap:5px;color:#d8c9e4;min-width:0}
+.kart-chip:hover{background:#3b2b4a}
+.kart-chip[aria-pressed=true]{border-color:#f5c98a;background:#4a3550;box-shadow:0 0 0 1px #f5c98a66}
+.kart-chip canvas{width:44px;height:44px;object-fit:contain;image-rendering:pixelated;max-width:100%}
+.kart-chip span{font:bold 7px 'Space Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+.kart-segments{display:flex;gap:5px}
+.kart-segments button{flex:1;padding:8px 5px;border:1px solid #564366;border-radius:3px;background:#241a30;color:#c2b0d4;font:bold 9px 'Space Mono',monospace}
+.kart-segments button[aria-pressed=true]{color:#fff0d8;background:#5a3550;border-color:#f5a25d}
+.kart-copy{font-size:10px;line-height:1.45;color:#b7a6c8;margin:8px 0 0;min-height:29px}
+/* Two short explainers fill the space under the difficulty buttons with
+   something worth reading - how a drift pays off and what the items do -
+   rather than leaving a hole in the middle of the pit lane. */
+.kart-tip{margin-top:12px;padding:9px 11px;border-left:2px solid #6a4a72;background:#241a30;border-radius:0 4px 4px 0}
+.kart-tip span{display:block;font:7px 'Space Mono',monospace;letter-spacing:1.2px;color:#f5a25d;margin-bottom:4px}
+.kart-tip p{font-size:9px;line-height:1.55;color:#a894b4;margin:0}
+.kart-tip b{color:#d8c9e4}
+
+/* Circuit list + a real top-down preview of the chosen track, so you know the
+   shape of the corners before you commit to two laps of them. */
+.kart-tracks{display:flex;flex-direction:column;gap:6px}
+.kart-track{text-align:left;padding:8px 10px;border:1px solid #4c3b5c;border-left:3px solid #4c3b5c;border-radius:4px;background:#241a30;color:#d8c9e4;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.kart-track:hover{background:#33223f}
+.kart-track[aria-pressed=true]{border-color:#f5a25d;border-left-color:#f5a25d;background:#3d2740}
+.kart-track strong{font:bold 10px 'Space Mono',monospace;color:#fff0d8}
+.kart-track span{font-size:9px;color:#b7a6c8}
+.kart-track em{font:7px 'Space Mono',monospace;color:#8f7ba6;font-style:normal}
+.kart-preview-wrap{margin-top:8px;border:1px solid #4c3b5c;border-radius:4px;background:#181020;padding:4px;line-height:0}
+.kart-preview-wrap canvas{width:100%;height:auto;image-rendering:pixelated;opacity:.92}
+
+.kart-setup-bottom{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-top:16px;flex:0 0 auto}
+.kart-setup-note{font:7px 'Space Mono',monospace;color:#8f7ba6;letter-spacing:.2px;line-height:1.6}
+.kart-primary{background:#f5a25d;border:1px solid #ffcb95;border-bottom:4px solid #b06a2c;border-radius:4px;color:#2a1a10;padding:12px 25px;font:bold 11px 'Space Mono',monospace;letter-spacing:1px}
+.kart-primary:hover{background:#ffb877}
+.kart-primary span{margin-left:25px}
+
+/* ---- results / pause dialogs ---- */
+.kart-overlay{position:absolute;inset:0;background:#140d1bdd;display:grid;place-items:center;z-index:4;padding:20px}
+.kart-overlay[hidden]{display:none}
+.kart-modal{max-width:520px;width:100%;padding:24px 22px;background:#2a1e35;border:1px solid #6a5278;border-radius:8px;box-shadow:0 10px 0 #0d0813aa;text-align:center}
+.kart-modal[hidden]{display:none}
+.kart-modal h2{font:bold 32px 'Space Mono',monospace;margin:14px 0;color:#ffe6b0;letter-spacing:-1.6px;text-shadow:2px 3px #8a4a20}
+.kart-modal p{font-size:12px;color:#c2b0d4;line-height:1.6;margin:10px 0 16px}
+.kart-modal-actions{display:flex;flex-direction:column;gap:9px;align-items:center;margin-top:16px}
+.kart-modal-actions button{width:min(300px,100%)}
+.kart-secondary{border:1px solid #7c6590;background:#3d2b48;color:#f0e2ff;border-bottom:3px solid #150e1e;border-radius:4px;padding:11px;font:bold 10px 'Space Mono',monospace}
+.kart-text-button{background:none;border:0;color:#a894b4;font:8px 'Space Mono',monospace;padding:8px}
+
+/* The finishing order. The player's row is highlighted so the result of the
+   race is the first thing you read, not something you have to hunt for. */
+.kart-result-summary{font:11px 'Space Mono',monospace;color:#c9b6da;margin:0 0 14px}
+.kart-result-summary strong{color:#ffd98a}
+.kart-result table{width:100%;border-collapse:collapse;font:10px 'Space Mono',monospace;margin:6px 0}
+.kart-result th{font:7px 'Space Mono',monospace;letter-spacing:1px;color:#8f7ba6;text-align:left;padding:5px 6px;border-bottom:1px solid #4c3b5c}
+.kart-result td{padding:6px;text-align:left;color:#ded1ea;border-bottom:1px solid #3a2b46}
+.kart-result td:first-child{color:#f5a25d;font-weight:700;width:26px}
+.kart-result tr.is-player td{background:rgba(245,162,93,.14);color:#fff0d8}
+.kart-result tr.is-player td:first-child{color:#ffd98a}
+
+/* ---- touch controls: steer left, act right ---- */
+.kart-touch{display:none;justify-content:space-between;padding:12px 0;gap:9px;touch-action:none}
+.kart-touch>div{display:flex;gap:7px}
+.kart-touch button{min-width:44px;height:48px;font:bold 9px 'Space Mono',monospace;border:1px solid #564366;border-bottom:3px solid #150e1e;background:#2c2038;color:#e8dcf2;border-radius:5px;touch-action:none;user-select:none}
+.kart-touch button.is-down{background:#57395c;transform:translateY(1px)}
+.kart-touch-steer{align-items:center}
+.kart-touch-gas{background:#5a3550!important;color:#fff0d8!important}
+.kart-touch-drift{color:#f5c98a!important}
+.kart-touch-item{color:#ffd98a!important}
+.kart-page .instructions{padding:23px 0}
+
+/* Fullscreen: let the cabinet fill the display, keep the 16:9 race centred. */
+.kart-screen:fullscreen{background:#241a2e;display:grid;place-items:center}
+.kart-screen:fullscreen #kart{width:100%;height:100%;object-fit:contain}
+.kart-screen:fullscreen .kart-setup{max-width:1180px;max-height:720px;margin:auto;border-radius:8px;position:relative;inset:auto}
+.kart-screen:fullscreen .kart-modal{max-width:540px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* The cabinet must be tall enough for the setup screen to breathe on a desktop
+   without scrolling, but the race itself only needs the 16:9 screen. */
+/* The setup screen is a pit lane, not a HUD. Sizing the cabinet by the 16:9 race
+   aspect would force a 750px-tall screen to hold ~560px of setup content, which
+   pushes START RACE off the bottom of a laptop screen. So while the setup screen
+   is showing the screen is sized by its content instead, and the 16:9 ratio only
+   takes over once the race starts. */
+.kart-screen{aspect-ratio:16/9}
+.kart-screen:has(.kart-setup:not([hidden])){aspect-ratio:auto;min-height:0;
+  /* Bounded so the setup body is the thing that scrolls, never the cabinet. */
+  height:min(720px,calc(100dvh - 210px))}
+@media(min-width:701px){
+  /* While racing, the screen is a 16:9 window that must fit the viewport height
+     left over after the header, heading and mode switch. */
+  .kart-cabinet{width:min(100%,1180px);min-width:min(820px,100%)}
+  .kart-cabinet:has(.kart-screen:not(:has(.kart-setup:not([hidden])))){
+    width:min(100%,calc((100dvh - 250px)*16/9))}
+  .kart-screen:has(.kart-setup:not([hidden])){aspect-ratio:auto}
+}
+@media(pointer:coarse){.kart-touch{display:flex}}
+@media(prefers-reduced-motion:reduce){.kart-chip,.kart-primary{transition:none}}
+
+/* ---- small screens: the setup screen grows taller, because the phone is
+   portrait and the pit lane needs to stack rather than squeeze ---- */
+@media(max-width:700px){
+  .mode-switch{margin-bottom:12px;font-size:8px;width:100%;justify-content:center}
+  .mode-switch a,.mode-switch .active-mode{padding:8px 10px}
+  .mode-switch span span,.mode-switch a span{display:none}
+  .kart-setup{padding:16px 14px}
+  .kart-screen:has(.kart-setup:not([hidden])){aspect-ratio:auto;min-height:0;height:min(620px,calc(100dvh - 250px))}
+  .kart-setup h2{font-size:22px}
+  .kart-setup-head{margin-bottom:15px}
+  .kart-setup-body{grid-template-columns:1fr;gap:16px}
+  .kart-chars{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .kart-chip{padding:8px 3px}
+  .kart-chip canvas{width:40px;height:40px}
+  .kart-copy{min-height:0}
+  .kart-setup-bottom{gap:8px;margin-top:14px;flex-direction:column;align-items:stretch}
+  .kart-primary{font-size:10px;padding:11px 16px}
+  .kart-primary span{margin-left:9px}
+  .kart-setup-note{font-size:6px;text-align:center}
+  .kart-format{font-size:7px}
+  .kart-modal{padding:16px 13px}
+  .kart-modal h2{font-size:22px;margin:9px 0}
+  .kart-modal p{font-size:10px;margin:7px 0 11px}
+  .kart-modal-actions button{padding:9px;font-size:9px}
+  .kart-modal .kart-text-button{padding:6px;font-size:7px}
+  .kart-modal .kart-kicker{font-size:6px}
+  .kart-result table{font-size:9px}
+  .kart-touch{display:flex;gap:5px}
+  .kart-touch>div{gap:4px}
+  .kart-touch button{min-width:38px;height:46px;font-size:8px}
+  .kart-instructions{grid-template-columns:1fr 1fr!important;gap:12px}
+  .kart-instructions>div:last-child{display:flex!important;grid-column:1/-1}
+  .kart-page footer{font-size:6px}
+  .kart-screen:not(:fullscreen):has(.kart-overlay:not([hidden])){min-height:340px;aspect-ratio:auto}
+}
+@media(max-width:700px) and (orientation:landscape){
+  .kart-page .mode-switch{display:none}
+  .kart-screen:has(.kart-setup:not([hidden])){min-height:440px}
+  .kart-setup{padding:13px}
+  .kart-setup-body{grid-template-columns:1.2fr 1fr;gap:14px}
+  .kart-chars{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .kart-chip span{font-size:6px}
+  .kart-chip canvas{height:32px}
+  .kart-cabinet{width:100%}
+  .kart-touch{padding:7px 0}
+}
