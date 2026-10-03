@@ -24,7 +24,7 @@ To run it on your own machine, open `index.html` directly in a modern browser, o
 | Restart adventure | R |
 | Mute | M |
 
-The main menu (the title screen inside the arcade cabinet) offers three modes: **ADVENTURE**, **BADMINTON** and **PIXEL KART**. ADVENTURE opens the character selector, choose a character, then start. Left / Right selects a card and Enter confirms. Continue Adventure resumes the saved character directly. Touch devices get movement, run, jump, and fire buttons. Fullscreen and audio controls are above the game. Browser audio begins after an input gesture.
+The main menu (the title screen inside the arcade cabinet) offers four modes: **ADVENTURE**, **BADMINTON**, **TANK BATTLE** and **PIXEL CLASH**. ADVENTURE opens the character selector, choose a character, then start. Left / Right selects a card and Enter confirms. Continue Adventure resumes the saved character directly. Touch devices get movement, run, jump, and fire buttons. Fullscreen and audio controls are above the game. Browser audio begins after an input gesture.
 
 Returning home saves the current world, score, lives, character, and powers. CONTINUE ADVENTURE starts that world again from its beginning. Cancel returns to pause without changing the run.
 
@@ -50,7 +50,9 @@ Each stage has a midway checkpoint for recovery after a lost life. Progress save
 
 ## Validation
 
-Run `npm run check` for syntax checks and `node test-game.cjs` for deterministic gameplay acceptance checks covering movement, jumping, character-specific pickups, weapons, enemies, fireworks, stage progression, and victory. With the server running, `node check-pickups.cjs` checks the item art in Chrome and writes `preview-powerups.png`; `node check-finish.cjs` checks the finish sequence; `node check-menu.cjs` drives real Chrome over the DevTools protocol (no Playwright install needed) to check the main menu mode row, Adventure Mode, Badminton Mode, returning to the main menu from either mode, and the phone layout, writing `preview-mode-select.png` and `preview-mode-select-mobile.png`. Point it at the deployed copy instead of localhost with `PQ_SITE=https://lzfxisxji.github.io/pixel-quest/ node check-menu.cjs`; the same 10 checks pass against GitHub Pages. `node check-badminton-move.cjs` proves the four-way footwork in a real browser the same way: it holds the arrow keys, reads the lane and the along-court position out of the simulation, and reads the sprite's contact point out of the same projection the renderer draws with, then checks that the four directions are four distinct screen diagonals, that sprites scale with distance around a live match, and the phone pad layout, writing `preview-badminton-lanes.png` and `preview-badminton-touch-lanes.png`.
+Run `npm run check` for syntax checks and `node test-game.cjs` for deterministic gameplay acceptance checks covering movement, jumping, character-specific pickups, weapons, enemies, fireworks, stage progression, and victory. With the server running, `node check-pickups.cjs` checks the item art in Chrome and writes `preview-powerups.png`; `node check-finish.cjs` checks the finish sequence; `node check-menu.cjs` drives real Chrome through Playwright to check that all four current modes are visible with no kart entry left, that Adventure, Badminton, Tank Battle and Fighting each launch and stay independent, that returning to the main menu works, that the menu fits phone, tablet and desktop, and that nothing throws, writing `preview-mode-select.png` and `preview-mode-select-mobile.png`. Point it at the deployed copy instead of localhost with `PQ_SITE=https://lzfxisxji.github.io/pixel-quest/ node check-menu.cjs`. `node check-badminton-move.cjs` proves the four-way footwork in a real browser the same way: it holds the arrow keys, reads the lane and the along-court position out of the simulation, and reads the sprite's contact point out of the same projection the renderer draws with, then checks that the four directions are four distinct screen diagonals, that sprites scale with distance around a live match, and the phone pad layout, writing `preview-badminton-lanes.png` and `preview-badminton-touch-lanes.png`.
+
+`npm run verify` runs the whole set: syntax checks, then `test-game.cjs` (42), `test-badminton.cjs` (30), `test-fighting.cjs` (25), `test-fighting-protection.cjs` (5) and `test-tank.cjs` (20), then the browser suites `check-menu.cjs` (7), `check-badminton-move.cjs` (9) and `check-tank.cjs` (17) — 155 checks in total. The browser suites need Playwright available on the machine; the headless ones do not.
 
 The game uses a fixed 60 Hz simulation with a capped accumulator, responsive pixel-rendered canvas, procedural parallax scenery, and Web Audio synthesis. The game and its art are an original homage, not an official Nintendo release.
 # Shuttle Club — independent badminton mode
@@ -85,36 +87,14 @@ The previous side-view badminton mode is preserved byte-for-byte in `backup/badm
 
 The Badminton **Relaxed** AI is deliberately beatable. Its reaction delay is three times Competitive's (0.52s against 0.17s), it aims with 2.7x the placement error, it moves at two-thirds of the speed, and it jumps on only 18% of shots against 65%. It also makes timed visible mistakes: with a 34% chance per decision window it will, for half a second to a second at a time, aim at the wrong half of the court, drift out of its lane and hesitate over its swing, and its reaction is doubled for the duration. Competitive and Ruthless make no mistakes at all.
 
-# Pixel Kart — independent kart racing mode
+# Pixel Clash — independent fighting mode
 
-Open `http://localhost:4173/kart.html`, or choose **PIXEL KART** on the Pixel Quest main menu. It is a third standalone page: it loads neither the adventure nor the badminton engine, shares no game state and no save key with either, and the other two modes are unchanged.
+Choose **PIXEL CLASH** on the main menu or open `http://localhost:4173/fighting.html`. It is a standalone page: it reads the shared `character-assets.js` without modifying it, adds its own fighting-only sprite poses, and loads no adventure, badminton or tank engine. One player against the AI or two players on one keyboard, all six characters selectable on both sides, three AI difficulties, best of three 60-second rounds.
 
-| Control | Key |
-| --- | --- |
-| Accelerate | Up / W / Space |
-| Brake, reverse | Down / S |
-| Steer | Left / Right, or A / D |
-| Drift | Shift or J, through a corner |
-| Use item | Enter / L / U |
-| Pause | P |
+See [fighting-README.md](fighting-README.md) for the full control scheme, frame data, the eighteen character finishers, guard and dodge rules, and the anti-pressure protection system.
 
-Pick one of the six characters as your driver, one of three circuits and one of three AI difficulties, then **START RACE**. Every race is five karts over two laps: you plus four AI, each in a different character's kart.
+# Tank Battle — independent base-defense mode
 
-**Circuits.** *Sunrise Meadow* is long and open with room to drift. *Old Harbour* is tighter, with a narrow 33px half-width causeway that punishes late braking. *Neon Ridge* is the fastest of the three with a technical middle section. Every circuit is a generated closed loop — the shape is built from a star-shaped polar skeleton, smoothed with a centripetal Catmull-Rom spline, and resampled at a uniform 4px of arc length, so there are no cusps, no self-intersections and no fake hairpins from uneven sample spacing. The build refuses to produce a circuit it cannot measure: it checks that the tightest corner still has enough clear tarmac on the inside, and that separate stretches of the loop never pass too close together to be distinguishable.
+Choose **TANK BATTLE** on the main menu or open `http://localhost:4173/tank.html`. The retired `kart.html` URL redirects here; its racing engine, assets and tests have been removed. Adventure, Badminton and Fighting are retained.
 
-**Driving.** Top speed is 330px/s on tarmac and 62% of that in the grass, so running wide costs real time. Hold Shift or J into a corner to drift: the kart's velocity separates from its heading, it slides, lays skid marks and throws sparks, and a longer slide pays a bigger boost on exit. Braking distance is planned backwards around the whole lap, so the speed limit at any point is the fastest the *rest* of the circuit still allows.
-
-**Power-ups** are drawn at random, with the odds biased to what is useful: the leader is more likely to get defence, the back marker more likely to get a boost.
-
-- **Banana** — dropped behind you for the pack to hit.
-- **Ink** — dropped on the racing line; the kart that drives into it is partially blind for 1.6 seconds.
-- **Lightning** — shrinks every rival for a while.
-- **Boost** — a straight speed surge.
-- **Shell** — a shield that absorbs one hit.
-
-**AI.** The four opponents aim at a point on the racing line ahead, brake for what is coming, avoid hazards in a forward cone, drift through the corners worth sliding at, and make timed mistakes on the easier tiers. Each AI owns a private random stream for its own decisions, so a field is reliably slower on Relaxed than the same field on Ruthless. Measured over four seeds per circuit, the hard field spends 1.3% of a lap on Sunrise Meadow, 4.3% on Old Harbour and 3.9% on Neon Ridge in the grass.
-
-**Files.** `kart-tracks.js` owns the circuit geometry and is the single source of truth for everything positional — the racing line, the corner speed limits, item box placement and the spatial hash all read from it. `kart-assets.js` bakes every kart in 16 headings, drawn in code with the driver seated in the vehicle; there are no image files. `kart-core.js` owns the race simulation, physics, AI and power-ups. `kart.js` owns rendering, audio, input and the camera.
-
-**Tests.** `node test-kart.cjs` is 34 headless acceptance checks over geometry, physics, drifting, the AI, power-ups and lap counting. `node soak-kart.cjs` runs 54 full races across every circuit and difficulty and asserts none of them hangs, strands a kart, loses a kart or produces an impossible lap. `node check-kart.cjs` drives real Chrome over the DevTools protocol for the 16 things that only exist in a browser: that the page boots alone, that the track is genuinely painted, that all six drivers are visibly seated in their karts, that a drift really slides and lays marks, that a full two-lap race reaches the results screen, and that leaving the mode returns to a main menu where all three modes still work. `npm run verify` runs all six suites — 146 checks in total.
-
+See [tank-README.md](tank-README.md) for controls, the six-stage campaign, character abilities and verification commands.

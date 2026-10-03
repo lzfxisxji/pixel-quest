@@ -1,1 +1,15 @@
-{"name":"super-pixel-quest","version":"1.0.0","private":true,"scripts":{"start":"node server.js","dev":"node server.js --dev","check":"node --check game.js && node --check character-assets.js && node --check badminton-view.js && node --check badminton-core.js && node --check badminton.js && node --check kart-tracks.js && node --check kart-assets.js && node --check kart-core.js && node --check kart.js","test":"node test-game.cjs && node test-badminton.cjs && node test-kart.cjs","check-menu":"node check-menu.cjs","check-kart":"node check-kart.cjs","check-footwork":"node check-badminton-move.cjs","verify":"npm run check && npm test && npm run check-menu && npm run check-footwork && npm run check-kart"}}
+{
+  "name": "super-pixel-quest",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --dev",
+    "check": "node --check game.js && node --check character-assets.js && node --check badminton-view.js && node --check badminton-core.js && node --check badminton.js && node --check fighting-core.js && node --check fighting.js && node --check tank-core.js && node --check tank-assets.js && node --check tank.js",
+    "test": "node test-game.cjs && node test-badminton.cjs && node test-fighting.cjs && node test-fighting-protection.cjs && node test-tank.cjs",
+    "check-menu": "node check-menu.cjs",
+    "check-footwork": "node check-badminton-move.cjs",
+    "verify": "npm run check && npm test && npm run check-menu && npm run check-footwork && npm run check-tank",
+    "check-tank": "node check-tank.cjs"
+  }
+}
