@@ -10,7 +10,7 @@
 .lobby-roster{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .lobby-hero{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #ffffff1a;border-radius:10px;background:#ffffff08;transition:border-color .18s,background .18s}
 .lobby-hero:hover{border-color:var(--accent);background:#ffffff12}
-.lobby-hero canvas{flex:0 0 auto;width:48px;height:56px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 #0006)}
+.lobby-hero canvas{flex:0 0 auto;width:50px;height:50px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 #0006)}
 .lobby-hero strong{display:block;font-size:12px;letter-spacing:.06em;color:#e8f1f4}
 .lobby-hero span{display:block;margin-top:2px;font-family:monospace;font-size:9px;letter-spacing:.12em;color:var(--accent)}
 .lobby-hero p{margin:5px 0 0;font-size:11px;line-height:1.6;color:#9fb4bd}
