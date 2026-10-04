@@ -8,7 +8,7 @@
   const $=s=>document.querySelector(s),canvas=$('#bd-game'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const setup=$('#bd-setup'),modal=$('#bd-modal'),keys=new Set(),edges=new Set();
   const shortNames={explorer:'EXPLORER',soldier:'COMMANDO',mystic:'THREE-EYED',dora:'DORAEMON',goku:'SON GOKU',nezha:'NEZHA'};
-  const settings={character:'explorer',opponent:'soldier',difficulty:'medium',mode:'normal'};
+  const settings={character:(()=>{try{return assets.ids.includes(localStorage.getItem('pq-hero'))?localStorage.getItem('pq-hero'):'explorer';}catch{return 'explorer';}})(),opponent:'soldier',difficulty:'medium',mode:'normal'};
   const colors={explorer:'#f5bf59',soldier:'#82c9ff',mystic:'#c6a5f0',dora:'#82e1ef',goku:'#f6af6e',nezha:'#ed97ac'};
   let match=null,dialog='',destination='./',clock=0,accumulator=0,last=performance.now(),muted=false;
   let record={wins:0,matches:0,bestRally:0};
@@ -35,7 +35,7 @@
   function portrait(c,id){c.clearRect(0,0,c.canvas.width,c.canvas.height);c.imageSmoothingEnabled=false;const pose=id==='explorer'?'hero':id,rows=sportArt[pose],scale=72/rows.length,width=Math.max(...rows.map(r=>r.length));sprite(c,pose,(c.canvas.width-width*scale)/2,c.canvas.height-rows.length*scale-4,false,scale,assets.colors[id]||{});}
   for(const id of assets.ids){
     const button=document.createElement('button');button.className='bd-character';button.dataset.character=id;button.setAttribute('aria-label',assets.names[id]);button.setAttribute('aria-pressed',String(id===settings.character));button.innerHTML='<canvas width="120" height="84" aria-hidden="true"></canvas><span>'+shortNames[id]+'</span>';
-    button.addEventListener('click',()=>{settings.character=id;for(const b of $('#bd-characters').children)b.setAttribute('aria-pressed',String(b===button));$('#bd-selected-name').textContent=assets.names[id].toUpperCase();describe();});$('#bd-characters').append(button);portrait(button.querySelector('canvas').getContext('2d'),id);
+    button.addEventListener('click',()=>{settings.character=id;try{localStorage.setItem('pq-hero',id);}catch{};for(const b of $('#bd-characters').children)b.setAttribute('aria-pressed',String(b===button));$('#bd-selected-name').textContent=assets.names[id].toUpperCase();describe();});$('#bd-characters').append(button);portrait(button.querySelector('canvas').getContext('2d'),id);
     const option=document.createElement('option');option.value=id;option.textContent=assets.names[id];$('#bd-opponent').append(option);
   }
   $('#bd-opponent').value='soldier';$('#bd-opponent').addEventListener('change',e=>settings.opponent=e.target.value);
