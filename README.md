@@ -24,7 +24,7 @@ To run it on your own machine, open `index.html` directly in a modern browser, o
 | Restart adventure | R |
 | Mute | M |
 
-The main menu (the title screen inside the arcade cabinet) offers four modes: **ADVENTURE**, **BADMINTON**, **TANK BATTLE** and **PIXEL CLASH**. ADVENTURE opens the character selector, choose a character, then start. Left / Right selects a card and Enter confirms. Continue Adventure resumes the saved character directly. Touch devices get movement, run, jump, and fire buttons. Fullscreen and audio controls are above the game. Browser audio begins after an input gesture.
+The main menu (the title screen inside the arcade cabinet) offers five modes: **ADVENTURE**, **BADMINTON**, **TANK BATTLE**, **PIXEL CLASH** and **BOMBER ARENA**. ADVENTURE opens the character selector, choose a character, then start. Left / Right selects a card and Enter confirms. Continue Adventure resumes the saved character directly. Touch devices get movement, run, jump, and fire buttons. Fullscreen and audio controls are above the game. Browser audio begins after an input gesture.
 
 Returning home saves the current world, score, lives, character, and powers. CONTINUE ADVENTURE starts that world again from its beginning. Cancel returns to pause without changing the run.
 
@@ -98,3 +98,11 @@ See [fighting-README.md](fighting-README.md) for the full control scheme, frame 
 Choose **TANK BATTLE** on the main menu or open `http://localhost:4173/tank.html`. The retired `kart.html` URL redirects here; its racing engine, assets and tests have been removed. Adventure, Badminton and Fighting are retained.
 
 See [tank-README.md](tank-README.md) for controls, the six-stage campaign, character abilities and verification commands.
+
+# Bomber Battle — independent arcade arena mode
+
+Choose **BOMBER ARENA** on the title menu or open `http://localhost:4173/bomber.html`. Includes 1P vs 3 AI, local 2P co-op, local 2P versus (optional AI rivals), three arenas, three difficulties, grid movement, chain bombs, destructible crates, pickups and six original-character abilities. See [bomber-README.md](bomber-README.md) for controls, rules, module boundaries and verification.
+
+# Bomber Arena architecture update
+
+The single **BOMBER ARENA** entry now opens an internal selection screen: **BOMB BATTLE** (preserved classic mode) or **HAMMER BATTLE** (independent hammer combat, shields, respawns and first-to-ten eliminations). Both support solo and local multiplayer, share original character artwork and common arena UI, and have Back to Modes navigation. See [arena-README.md](arena-README.md).

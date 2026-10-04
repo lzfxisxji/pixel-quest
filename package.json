@@ -5,11 +5,23 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js --dev",
-    "check": "node --check game.js && node --check character-assets.js && node --check badminton-view.js && node --check badminton-core.js && node --check badminton.js && node --check fighting-core.js && node --check fighting.js && node --check tank-core.js && node --check tank-assets.js && node --check tank.js",
-    "test": "node test-game.cjs && node test-badminton.cjs && node test-fighting.cjs && node test-fighting-protection.cjs && node test-tank.cjs",
+    "check": "node --check game.js && node --check character-assets.js && node --check badminton-view.js && node --check badminton-core.js && node --check badminton.js && node --check fighting-core.js && node --check fighting.js && node --check tank-core.js && node --check tank-assets.js && node --check tank.js && node --check bomber-core.js && node --check bomber-assets.js && node --check bomber.js && node --check hammer-core.js && node --check hammer-assets.js && node --check hammer-view.js",
+    "test": "node test-game.cjs && node test-badminton.cjs && node test-fighting.cjs && node test-fighting-protection.cjs && node test-tank.cjs && node test-bomber.cjs && node test-hammer.cjs",
     "check-menu": "node check-menu.cjs",
     "check-footwork": "node check-badminton-move.cjs",
-    "verify": "npm run check && npm test && npm run check-menu && npm run check-footwork && npm run check-tank",
-    "check-tank": "node check-tank.cjs"
+    "check-lobby": "node check-lobby.cjs",
+    "check-brand": "node check-brand-name.cjs",
+    "check-home-nav": "node check-home-navigation.cjs",
+    "check-continue": "node check-adventure-continue.cjs",
+    "check-grip": "node check-badminton-grip.cjs",
+    "check-hammer-visual": "node check-hammer-visual.cjs",
+    "check-online": "node check-online.cjs",
+    "verify": "npm run check && npm test && npm run check-menu && npm run check-lobby && npm run check-brand && npm run check-home-nav && npm run check-continue && npm run check-footwork && npm run check-grip && npm run check-tank && npm run check-bomber && npm run check-hammer-visual && npm run soak-bomber && npm run check-arena",
+    "verify-local": "npm run verify && npm run check-online",
+    "verify-online": "node check-online.cjs https://lzfxisxji.github.io/pixel-quest/",
+    "check-tank": "node check-tank.cjs",
+    "check-bomber": "node check-bomber.cjs",
+    "soak-bomber": "node soak-bomber.cjs",
+    "check-arena": "node check-arena.cjs"
   }
 }

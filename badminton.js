@@ -49,7 +49,7 @@
   $('#bd-start').addEventListener('click',start);
   function showDialog(kind){
     if(!match)return;keys.clear();edges.clear();match.paused=true;dialog=kind;modal.hidden=false;$('#bd-final-score').hidden=kind!=='finished';
-    const data={paused:['TAKE A BREATHER','PAUSED','Your next rally will be right here.','KEEP PLAYING ▶','MATCH SETUP','BACK TO PIXEL QUEST'],leave:['LEAVE SHUTTLE CLUB?','RETURN HOME?','This match will end. Your adventure progress is kept separately.','YES, RETURN HOME','CANCEL',''],setup:['START A NEW MATCH?','NEW MATCH?','The current score will be reset.','YES, MATCH SETUP','CANCEL',''],finished:[match.winner===0?'THE COURT IS YOURS':'A GOOD RALLY, WELL PLAYED',match.winner===0?'YOU WIN!':'AI WINS','Longest rally: '+match.bestRally+' hits · '+assets.names[match.players[0].character]+' vs '+assets.names[match.players[1].character],'PLAY AGAIN ▶','MATCH SETUP','BACK TO PIXEL QUEST']}[kind];
+    const data={paused:['TAKE A BREATHER','PAUSED','Your next rally will be right here.','KEEP PLAYING ▶','MATCH SETUP','返回小霸王游戏合集'],leave:['LEAVE SHUTTLE CLUB?','RETURN HOME?','This match will end. Your adventure progress is kept separately.','YES, RETURN HOME','CANCEL',''],setup:['START A NEW MATCH?','NEW MATCH?','The current score will be reset.','YES, MATCH SETUP','CANCEL',''],finished:[match.winner===0?'THE COURT IS YOURS':'A GOOD RALLY, WELL PLAYED',match.winner===0?'YOU WIN!':'AI WINS','Longest rally: '+match.bestRally+' hits · '+assets.names[match.players[0].character]+' vs '+assets.names[match.players[1].character],'PLAY AGAIN ▶','MATCH SETUP','返回小霸王游戏合集']}[kind];
     $('#bd-modal-tag').textContent=data[0];$('#bd-modal-title').textContent=data[1];$('#bd-modal-copy').textContent=data[2];$('#bd-modal-primary').textContent=data[3];$('#bd-modal-secondary').textContent=data[4];$('#bd-modal-tertiary').textContent=data[5];$('#bd-modal-tertiary').hidden=!data[5];$('#bd-final-score').textContent=match.score[0]+' — '+match.score[1];$('#bd-modal-primary').focus();
   }
   function resume(){if(!match)return;match.paused=false;modal.hidden=true;dialog='';canvas.focus();}
@@ -196,7 +196,18 @@
     const bob=p.ground?Math.sin(clock*(4.5+speed*.035))*.15*(speed/126):0;
     sprite(ctx,pose,box.x-width/2,box.y-box.height+bob,p.side===1,scale,assets.colors[p.character]||{});
     const swing=p.animation>0?1-p.animation/.28:0,angle=p.animation>0?(-1.5+swing*3.1):-.3+Math.sin(clock*3)*.07;
-    ctx.save();ctx.translate(snap(box.x+dir*13*k),snap(box.y-22*k));ctx.scale(dir,1);ctx.rotate(angle);ctx.drawImage(racket,1,-27);ctx.restore();
+    // Shoulder, forearm and grip share the same character-relative transform.
+    // The racket's handle centre (8,25) sits exactly inside the palm.
+    const shoulder={x:box.x+dir*width*.23,y:box.y-box.height*.46+bob},
+      reach=p.animation>0?12:10,armAngle=p.animation>0?(-1.1+swing*1.9):.22,
+      hand={x:shoulder.x+dir*Math.cos(armAngle)*reach*k,y:shoulder.y+Math.sin(armAngle)*reach*k},
+      elbow={x:shoulder.x+dir*5*k,y:shoulder.y+3*k},
+      skin=p.character==='dora'?'#fff4df':(assets.colors[p.character]?.S||assets.palette.S),
+      sleeve={explorer:'#df5c43',soldier:'#e6e5d4',mystic:'#2455aa',dora:'#28a9dd',goku:'#ef923a',nezha:'#db5065'}[p.character];
+    const arm=(a,b,col,thickness)=>{const n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)));for(let i=0;i<=n;i++)rect(ctx,snap(a.x+(b.x-a.x)*i/n-thickness/2),snap(a.y+(b.y-a.y)*i/n-thickness/2),thickness,thickness,col);};
+    arm(shoulder,elbow,sleeve,3*k);arm(elbow,hand,skin,2.5*k);
+    ctx.save();ctx.translate(snap(hand.x),snap(hand.y));ctx.scale(dir*k,k);ctx.rotate(angle);ctx.drawImage(racket,-8,-25);ctx.restore();
+    rect(ctx,snap(hand.x-1.7*k),snap(hand.y-1.6*k),3.4*k,3.2*k,skin);
     if(p.animation>0)for(let i=0;i<4;i++)rect(ctx,box.x+dir*(16+i*5)*k,box.y-35*k+Math.sin(i+clock*25)*10*k,2*k,2*k,p.shot==='special'?colors[p.character]:'#f8efbe');
     if(active&&p.swing>0)rect(ctx,box.x-2*k,box.y-47*k,4*k,2*k,'#fff4b2');
   }
