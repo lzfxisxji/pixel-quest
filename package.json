@@ -34,6 +34,6 @@
     "check-nine-heroes": "node check-nine-heroes.cjs",
     "test-island": "node test-island.cjs && node test-island-double-jump.cjs && node test-island-campaign.cjs",
     "check-island": "node check-island.cjs",
-    "check-touch": "node check-touch-joystick.cjs"
+    "check-touch": "node check-touch-joystick.cjs && node check-touch-longpress.cjs"
   }
 }
