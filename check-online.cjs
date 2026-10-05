@@ -19,21 +19,24 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
     pass('home page returns 200 with the expected title and brand');
 
     assert(await page.locator('#arcade-lobby').isVisible(), 'arcade lobby must be visible');
-    assert.equal(await page.locator('.lobby-card').count(), 5);
-    pass('arcade lobby shows all five mode cards');
+    assert.equal(await page.locator('.lobby-card').count(), 8);
+    pass('arcade lobby shows all eight mode cards');
 
     for (const [id, url, api] of [
       ['play-badminton', 'badminton', 'PixelBadminton'],
       ['play-tank', 'tank', 'PixelTank'],
       ['play-fighting', 'fighting', 'PixelFighting'],
       ['play-bomber', 'bomber', 'PixelBomber'],
+      ['play-blocks', 'blocks', 'PixelBlocks'],
+      ['play-frost', 'frost', 'PixelFrost'],
+      ['play-island', 'island', 'PixelIsland'],
     ]) {
       await page.goto(SITE);
       await page.waitForFunction(() => window.PixelQuest?.state === 'title');
       await page.locator(`[data-launch=${id}]`).click();
       await page.waitForURL('**/' + url + '.html');
       await page.waitForFunction(a => !!window[a], api);
-      for (const g of ['PixelQuest', 'PixelBadminton', 'PixelTank', 'PixelFighting', 'PixelBomber'].filter(x => x !== api)) {
+      for (const g of ['PixelQuest', 'PixelBadminton', 'PixelTank', 'PixelFighting', 'PixelBomber', 'PixelBlocks', 'PixelFrost', 'PixelIsland'].filter(x => x !== api)) {
         assert.equal(await page.evaluate(k => typeof window[k], g), 'undefined',
           `${url}.html must not load ${g}`);
       }
@@ -50,7 +53,7 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
       await page.waitForFunction(() => window.PixelQuest?.state === 'title');
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         `horizontal overflow at ${w}px`);
-      for (const id of ['play', 'play-badminton', 'play-tank', 'play-fighting', 'play-bomber']) {
+      for (const id of ['play', 'play-badminton', 'play-tank', 'play-fighting', 'play-bomber', 'play-blocks', 'play-frost', 'play-island']) {
         assert(await page.locator(`[data-launch=${id}]`).isVisible(), `${id} card hidden at ${w}px`);
       }
     }
