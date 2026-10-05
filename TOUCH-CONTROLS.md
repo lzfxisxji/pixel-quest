@@ -2,7 +2,7 @@
 
 Movement modes load `touch-joystick.css` and `touch-joystick.js` before their browser controller. No game-engine physics or desktop key bindings are replaced. Pixel Blocks intentionally does not load this adapter.
 
-Touch capability uses `navigator.maxTouchPoints` and `any-pointer: coarse`, covering phones, tablets and hybrid touch computers. Controls overlay the visible canvas at its lower left and lower right corners, in both normal view and fullscreen. They hide while setup or pause overlays are open. Safe-area insets, orientation changes, pointer capture, cancellation, visibility changes and pause overlays reset the stick.
+Touch capability uses `navigator.maxTouchPoints` and `any-pointer: coarse`, covering phones, tablets and hybrid touch computers. The cabinet extends downward with a dedicated control strip below the canvas. Normal view preserves canvas dimensions; fullscreen fits the canvas and control strip within the viewport. They hide while setup or pause overlays are open. Safe-area insets, orientation changes, pointer capture, cancellation, visibility changes and pause overlays reset the stick.
 
 Pads scale to the actual canvas area: 68 px on small canvases, 88 px on compact canvases, 120 px normally, and 144 px on large tablet canvases. Action buttons remain translucent and adapt with the pad. Action buttons retain independent pointers so movement and attacks can be held together. Horizontal modes keep Jump and Guard separate. Grid/four-direction modes snap to their existing permitted axes. Badminton reads continuous normalized axes with a 25% radial dead zone for 360 degree input.
 

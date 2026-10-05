@@ -1,6 +1,6 @@
-/* In-game touch overlay. Pixel Blocks never loads this stylesheet. */
+/* Dedicated control strip inside the cabinet. Pixel Blocks never loads this stylesheet. */
 .joystick-replaced{display:none!important}
-.joystick-controls{position:absolute!important;display:none!important;margin:0!important;padding:0!important;z-index:15;pointer-events:none;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+.joystick-controls{position:relative!important;display:none!important;margin:0!important;padding:0!important;width:100%!important;min-height:100px;border-top:1px solid #b5d9df26;background:#20343e;z-index:15;pointer-events:none;box-sizing:border-box;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
 .has-touch .joystick-controls{display:block!important}
 .joystick-controls.joystick-inactive{display:none!important}
 .joystick-controls .arcade-joystick{position:absolute!important;display:block!important;left:20px;bottom:18px;width:120px;height:120px;border:2px solid #daeff54d;border-radius:50%;background:#d3edf01a;box-shadow:inset 0 0 0 5px #e2f4f00a;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -12,3 +12,7 @@
 @media(min-width:768px){.has-touch .joystick-controls:not(.joystick-compact) .arcade-joystick{left:28px;bottom:26px;width:144px;height:144px}.has-touch .joystick-controls:not(.joystick-compact) .joystick-thumb{width:60px;height:60px}.has-touch .joystick-controls:not(.joystick-compact) .joystick-actions{right:28px;bottom:26px;gap:12px!important}.has-touch .joystick-controls:not(.joystick-compact) button{min-width:62px!important;min-height:58px!important;font-size:13px!important;padding:12px!important}}
 .joystick-controls.joystick-compact .arcade-joystick{left:10px;bottom:10px;width:88px;height:88px}.joystick-compact .joystick-thumb{width:40px;height:40px}.joystick-controls.joystick-compact .joystick-actions{right:10px;bottom:10px;gap:5px!important;max-width:61%}.joystick-controls.joystick-compact button{min-width:42px!important;min-height:42px!important;padding:7px!important;font-size:10px!important}
 .joystick-controls.joystick-tiny .arcade-joystick{width:68px;height:68px;left:7px;bottom:7px}.joystick-tiny .joystick-thumb{width:32px;height:32px}.joystick-controls.joystick-tiny .joystick-actions{right:7px;bottom:7px;gap:4px!important;max-width:72%}.joystick-controls.joystick-tiny button{min-width:38px!important;min-height:38px!important;font-size:9px!important;padding:5px 6px!important}
+
+.has-touch .joystick-screen:fullscreen{flex-direction:column!important;justify-content:center!important;align-items:center!important;padding:0!important;box-sizing:border-box}
+.has-touch .joystick-screen:fullscreen>canvas{position:relative!important;top:auto!important;left:auto!important;flex:0 1 auto;object-fit:contain;width:auto!important;max-width:100%!important;height:auto!important;max-height:calc(100dvh - var(--joystick-space,160px))!important}
+.has-touch .joystick-screen:fullscreen>.joystick-controls{flex:0 0 auto;}
