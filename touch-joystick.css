@@ -16,3 +16,16 @@
 .has-touch .joystick-screen:fullscreen{flex-direction:column!important;justify-content:center!important;align-items:center!important;padding:0!important;box-sizing:border-box}
 .has-touch .joystick-screen:fullscreen>canvas{position:relative!important;top:auto!important;left:auto!important;flex:0 1 auto;object-fit:contain;width:auto!important;max-width:100%!important;height:auto!important;max-height:calc(100dvh - var(--joystick-space,160px))!important}
 .has-touch .joystick-screen:fullscreen>.joystick-controls{flex:0 0 auto;}
+
+/* Short touch landscapes: the whole cabinet fits the currently visible browser area. */
+.joystick-landscape-back{display:none}
+html.joystick-landscape-active,html.joystick-landscape-active body{overflow:hidden!important;overscroll-behavior:none}
+.has-touch .cabinet.joystick-landscape{position:fixed!important;z-index:1000;top:var(--touch-view-top,0)!important;left:var(--touch-view-left,0)!important;width:var(--touch-view-width,100vw)!important;height:var(--touch-view-height,100dvh)!important;min-width:0!important;max-width:none!important;margin:0!important;padding:0!important;display:flex!important;flex-direction:column;border-radius:0!important;box-sizing:border-box;}
+.joystick-landscape>.top,.joystick-landscape>.cabinet-top,.joystick-landscape>.bar:not(.foot):not(.bottom){display:flex!important;flex:0 0 32px!important;height:32px!important;min-height:0!important;padding:2px max(8px,env(safe-area-inset-right)) 2px max(8px,env(safe-area-inset-left))!important;gap:10px;font-size:9px!important;}
+.joystick-landscape .joystick-landscape-back{display:block;color:#f5d58b;text-decoration:none;font:11px monospace;white-space:nowrap;}
+.joystick-landscape>.screen{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:1 1 0!important;min-height:0!important;width:100%!important;height:auto!important;aspect-ratio:auto!important;overflow:hidden;background:#10222d;}
+.joystick-landscape>.screen>canvas{position:static!important;display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;min-height:0!important;aspect-ratio:auto!important;object-fit:contain!important;flex:0 1 auto;}
+.joystick-landscape>.joystick-controls{flex:0 0 88px!important;height:88px!important;}
+.joystick-landscape>.bottom,.joystick-landscape>.cabinet-bottom,.joystick-landscape>.foot{display:none!important;}
+.joystick-landscape .screen>#modal,.joystick-landscape .screen>#bd-modal,.joystick-landscape .screen>#overlay{overflow:auto!important;justify-content:flex-start!important;padding:8px!important;}
+.joystick-landscape .screen #modal h2,.joystick-landscape .screen #bd-modal h2{font-size:20px!important;margin:0!important;}

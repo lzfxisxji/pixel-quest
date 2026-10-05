@@ -6,9 +6,26 @@ function apply(codes){const next=new Set(codes);for(const c of active)if(!next.h
 reset=()=>{const id=pointer;pointer=null;axes={x:0,y:0,active:false};apply([]);thumb.style.transform='translate(-50%,-50%)';pad.classList.remove('engaged');if(id!==null&&pad.hasPointerCapture(id))pad.releasePointerCapture(id);};
 function move(e){const b=pad.getBoundingClientRect(),r=b.width*.32;let x=e.clientX-b.left-b.width/2,y=e.clientY-b.top-b.height/2,len=Math.hypot(x,y);if(len>r){x*=r/len;y*=r/len;}thumb.style.transform=`translate(calc(-50% + ${x}px),calc(-50% + ${y}px))`;const threshold=r*.25,magnitude=Math.hypot(x,y),strength=Math.max(0,(magnitude/r-.25)/.75);axes={x:magnitude?x/magnitude*strength:0,y:four&&magnitude?y/magnitude*strength:0,active:pointer!==null};let codes=[];if(four){if(Math.hypot(x,y)>threshold){if(Math.abs(x)>Math.abs(y))codes=[x<0?left:right];else codes=[y<0?up:down];if(free&&Math.min(Math.abs(x),Math.abs(y))>threshold)codes=[x<0?left:right,y<0?up:down];}}else if(Math.abs(x)>threshold)codes=[x<0?left:right];apply(codes);}
 pad.addEventListener('pointerdown',e=>{e.preventDefault();if(pointer!==null)return;pointer=e.pointerId;pad.setPointerCapture(pointer);pad.classList.add('engaged');move(e);});pad.addEventListener('pointermove',e=>{if(e.pointerId===pointer){e.preventDefault();move(e);}});for(const type of ['pointerup','pointercancel','lostpointercapture'])pad.addEventListener(type,e=>{if(e.pointerId===pointer)reset();});window.addEventListener('blur',reset);document.addEventListener('visibilitychange',()=>{if(document.hidden)reset();});new MutationObserver(reset).observe(document.querySelector('main')||document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
-// Extend the cabinet downward with a dedicated control strip.
-function layout(){reset();if(!screen||!canvas)return;const c=canvas.getBoundingClientRect();const compact=c.width<600||innerHeight<540;host.classList.toggle('joystick-compact',compact);host.classList.toggle('joystick-tiny',c.width<430);const height=compact?88:96;host.style.height=height+'px';screen.style.setProperty('--joystick-space',height+'px');}
-function visibility(){const blocked=[...screen.querySelectorAll('#setup,#modal,#bd-setup,#bd-modal,#overlay')].some(el=>!el.hidden&&getComputedStyle(el).display!=='none');host.classList.toggle('joystick-inactive',blocked);requestAnimationFrame(layout);}
+// Fit touch landscape gameplay to the visual viewport, including browser chrome.
+const cabinet=screen?.closest('.cabinet'), root=document.documentElement;
+let matchStarted=false;
+if(cabinet){const back=document.createElement('a');back.className='joystick-landscape-back';back.href='./';back.textContent='← 大厅';back.setAttribute('aria-label','返回游戏大厅');cabinet.querySelector('.top,.cabinet-top,.bar')?.prepend(back);}
+function visible(el){return !!el&&!el.hidden&&getComputedStyle(el).display!=='none';}
+function fitLandscape(){
+ if(!cabinet||!canvas)return;
+ const setup=screen.querySelector('#setup,#bd-setup'),choice=screen.querySelector('#arena-choice'),picker=screen.querySelector('#character-picker');
+ const overlay=screen.querySelector('#overlay');
+ if(visible(setup)||visible(choice)||visible(picker)||document.querySelector('main')?.hidden)matchStarted=false;
+ else if(!visible(overlay))matchStarted=true;
+ const v=window.visualViewport,w=v?.width||innerWidth,h=v?.height||innerHeight;
+ const fit=root.classList.contains('has-touch')&&w>h&&h<=600&&matchStarted&&!document.fullscreenElement;
+ cabinet.classList.toggle('joystick-landscape',fit);
+ root.classList.toggle('joystick-landscape-active',fit);
+ if(fit){cabinet.style.setProperty('--touch-view-height',h+'px');cabinet.style.setProperty('--touch-view-width',w+'px');cabinet.style.setProperty('--touch-view-top',(v?.offsetTop||0)+'px');cabinet.style.setProperty('--touch-view-left',(v?.offsetLeft||0)+'px');}
+}
+// Keep a compact dedicated strip below the game, never over the playfield.
+function layout(){reset();if(!screen||!canvas)return;fitLandscape();const c=canvas.getBoundingClientRect();const compact=c.width<600||innerHeight<540;host.classList.toggle('joystick-compact',compact);host.classList.toggle('joystick-tiny',c.width<430);const height=compact?88:96;host.style.height=height+'px';screen.style.setProperty('--joystick-space',height+'px');}
+function visibility(){const blocked=[...screen.querySelectorAll('#setup,#modal,#bd-setup,#bd-modal,#overlay,#arena-choice')].some(el=>!el.hidden&&getComputedStyle(el).display!=='none');host.classList.toggle('joystick-inactive',blocked);requestAnimationFrame(layout);}
 for(const type of ['contextmenu','dblclick','gesturestart','gesturechange','gestureend'])host.addEventListener(type,e=>e.preventDefault());for(const type of ['touchstart','touchmove','touchend'])host.addEventListener(type,e=>e.preventDefault(),{passive:false});
-window.addEventListener('resize',layout);document.addEventListener('fullscreenchange',()=>{const full=!!document.fullscreenElement;host.classList.toggle('joystick-fullscreen',full);if(full)screen.append(host);else screen.after(host);requestAnimationFrame(layout);});new ResizeObserver(layout).observe(canvas);new MutationObserver(visibility).observe(screen,{subtree:true,attributes:true,attributeFilter:['hidden']});layout();visibility();
+window.addEventListener('resize',layout);window.visualViewport?.addEventListener('resize',layout);window.visualViewport?.addEventListener('scroll',layout);document.addEventListener('fullscreenchange',()=>{const full=!!document.fullscreenElement;host.classList.toggle('joystick-fullscreen',full);if(full)screen.append(host);else screen.after(host);requestAnimationFrame(layout);});new ResizeObserver(layout).observe(canvas);new MutationObserver(visibility).observe(screen,{subtree:true,attributes:true,attributeFilter:['hidden']});layout();visibility();
 });})();
