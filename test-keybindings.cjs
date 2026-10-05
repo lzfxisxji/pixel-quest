@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');const K=require('./keybindings.js');let store={};global.localStorage={getItem:k=>store[k]||null,setItem:(k,v)=>store[k]=v};let n=0;const test=(s,f)=>{f();n++;console.log('PASS',s);};
+test('six modes default actions and aliases do not conflict',()=>{for(const mode of Object.keys(K.modes)){const seen=new Set();for(const a of K.bindings(mode))for(const c of a.keys){assert(!seen.has(c),mode+' '+c);seen.add(c);assert.equal(K.resolve(mode,c),a.codes[0]);}}});
+test('custom keys override original and all old aliases',()=>{assert(K.set('adventure','attack','KeyF').ok);assert.equal(K.resolve('adventure','KeyF'),'KeyJ');assert.equal(K.resolve('adventure','KeyJ'),null);assert.equal(K.resolve('adventure','KeyX'),null);});
+test('overrides persist in local storage and other modes remain default',()=>{assert.equal(JSON.parse(store[K.STORE]).adventure.attack,'KeyF');assert.equal(K.resolve('tank','KeyJ'),'KeyJ');});
+test('conflicting assignments are rejected without changing saved key',()=>{assert(K.set('adventure','attack','KeyD').error);assert.equal(K.resolve('adventure','KeyF'),'KeyJ');});
+test('reserved and browser shortcut keys cannot become game actions',()=>{for(const c of ['Escape','Tab','F5','MetaLeft','AltLeft','Unidentified'])assert(K.set('tank','fire',c).error);});
+test('player two number and numpad aliases are replaced together',()=>{assert(K.set('fighting','punch2','KeyB').ok);assert.equal(K.resolve('fighting','KeyB'),'Digit1');assert.equal(K.resolve('fighting','Digit1'),null);assert.equal(K.resolve('fighting','Numpad1'),null);});
+test('selecting original key restores its aliases',()=>{assert(K.set('adventure','attack','KeyJ').ok);assert.equal(K.resolve('adventure','KeyX'),'KeyJ');});
+test('reset affects selected mode only',()=>{K.reset('fighting');assert.equal(K.resolve('fighting','Numpad1'),'Digit1');assert.equal(K.resolve('adventure','KeyX'),'KeyJ');});
+test('unrelated keys pass through and corrupted settings safely fall back',()=>{assert.equal(K.resolve('blocks','KeyZ'),'KeyZ');store[K.STORE]='broken';assert.equal(K.resolve('blocks','Space'),'Space');});
+console.log(n+' keybinding checks passed');

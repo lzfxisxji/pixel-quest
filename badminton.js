@@ -4,12 +4,12 @@
    distinct screen directions, and characters scale with their distance. */
 (function(){
   'use strict';
-  const {Match,COURT,ABILITIES,flight}=PixelBadmintonCore,view=PixelBadmintonView,assets=PixelQuestCharacters;
+  const {Match,COURT,ABILITIES,flight}=PixelBadmintonCore,view=PixelBadmintonView,assets=PixelModeCharacters;
   const $=s=>document.querySelector(s),canvas=$('#bd-game'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const setup=$('#bd-setup'),modal=$('#bd-modal'),keys=new Set(),edges=new Set();
-  const shortNames={explorer:'EXPLORER',soldier:'COMMANDO',mystic:'THREE-EYED',dora:'DORAEMON',goku:'SON GOKU',nezha:'NEZHA'};
+  const shortNames={explorer:'EXPLORER',soldier:'COMMANDO',mystic:'THREE-EYED',dora:'DORAEMON',goku:'SON GOKU',nezha:'NEZHA',astro:'ASTRO BOY',happy:'HAPPY HERO',wuwa:'WU WA'};
   const settings={character:(()=>{try{return assets.ids.includes(localStorage.getItem('pq-hero'))?localStorage.getItem('pq-hero'):'explorer';}catch{return 'explorer';}})(),opponent:'soldier',difficulty:'medium',mode:'normal'};
-  const colors={explorer:'#f5bf59',soldier:'#82c9ff',mystic:'#c6a5f0',dora:'#82e1ef',goku:'#f6af6e',nezha:'#ed97ac'};
+  const colors={explorer:'#f5bf59',soldier:'#82c9ff',mystic:'#c6a5f0',dora:'#82e1ef',goku:'#f6af6e',nezha:'#ed97ac',astro:'#8beaff',happy:'#ffd079',wuwa:'#75e4ff'};
   let match=null,dialog='',destination='./',clock=0,accumulator=0,last=performance.now(),muted=false;
   let record={wins:0,matches:0,bestRally:0};
   try{const r=JSON.parse(localStorage.getItem('pq-badminton-records'));if(r&&Number.isFinite(r.matches)&&Number.isFinite(r.wins))record={...record,...r};}catch{}
@@ -31,7 +31,7 @@
   }
   // Total ground speed, so crossing the court sideways animates like running up it.
   const groundSpeed=p=>Math.hypot(p.vx||0,(p.vz||0)*147);
-  function basePose(p,moving){const step=moving&&Math.floor(clock*11)%2;if(p.character==='explorer')return !p.ground?'jump':step?'walk':'hero';if(p.character==='soldier')return !p.ground?'soldierJump':step?'soldierWalk':'soldier';if(p.character==='mystic')return !p.ground?'mysticJump':step?'mysticWalk':'mystic';if(p.character==='goku')return p.animation>0?'gokuShoot':step?'gokuWalk':'goku';if(p.character==='nezha')return step?'nezhaWalk':'nezha';return step?'doraWalk':'dora';}
+  function basePose(p,moving){if(['astro','happy','wuwa'].includes(p.character)){const id=p.character,pose=p.animation>0&&sportArt[id+'Shoot']?id+'Shoot':!p.ground?id+'Jump':moving&&Math.floor(clock*11)%2?id+'Walk':id;return sportArt[pose]?pose:id;}const step=moving&&Math.floor(clock*11)%2;if(p.character==='explorer')return !p.ground?'jump':step?'walk':'hero';if(p.character==='soldier')return !p.ground?'soldierJump':step?'soldierWalk':'soldier';if(p.character==='mystic')return !p.ground?'mysticJump':step?'mysticWalk':'mystic';if(p.character==='goku')return p.animation>0?'gokuShoot':step?'gokuWalk':'goku';if(p.character==='nezha')return step?'nezhaWalk':'nezha';return step?'doraWalk':'dora';}
   function portrait(c,id){c.clearRect(0,0,c.canvas.width,c.canvas.height);c.imageSmoothingEnabled=false;const pose=id==='explorer'?'hero':id,rows=sportArt[pose],scale=72/rows.length,width=Math.max(...rows.map(r=>r.length));sprite(c,pose,(c.canvas.width-width*scale)/2,c.canvas.height-rows.length*scale-4,false,scale,assets.colors[id]||{});}
   for(const id of assets.ids){
     const button=document.createElement('button');button.className='bd-character';button.dataset.character=id;button.setAttribute('aria-label',assets.names[id]);button.setAttribute('aria-pressed',String(id===settings.character));button.innerHTML='<canvas width="120" height="84" aria-hidden="true"></canvas><span>'+shortNames[id]+'</span>';
@@ -73,6 +73,7 @@
   window.addEventListener('blur',()=>{keys.clear();edges.clear();if(match&&match.phase!=='finished'&&!dialog)showDialog('paused');});
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&match&&match.phase!=='finished'&&!dialog)showDialog('paused');});
   modal.addEventListener('keydown',e=>{if(e.key==='Tab'){const controls=[...modal.querySelectorAll('button')].filter(b=>!b.hidden);if(e.shiftKey&&document.activeElement===controls[0]){e.preventDefault();controls.at(-1).focus();}else if(!e.shiftKey&&document.activeElement===controls.at(-1)){e.preventDefault();controls[0].focus();}}});
+window.ArcadeJoystick?.bind(c=>{if(!keys.has(c))edges.add(c);keys.add(c);sound.init();},c=>keys.delete(c));
   for(const b of document.querySelectorAll('[data-bd-key]')){
     b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);sound.init();if(!keys.has(b.dataset.bdKey))edges.add(b.dataset.bdKey);keys.add(b.dataset.bdKey);b.classList.add('held');});
     for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>{keys.delete(b.dataset.bdKey);b.classList.remove('held');});
@@ -80,7 +81,7 @@
   // Two-axis footwork. In this projection the two axes are diagonal on screen:
   // move walks along the court (up-right / down-left), side walks across it
   // (down-right / up-left). Forward is the front line, so ArrowDown / S adds lane.
-  function input(){const move=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA')),side=Number(keys.has('ArrowDown')||keys.has('KeyS'))-Number(keys.has('ArrowUp')||keys.has('KeyW'));let shot=edges.has('KeyE')?'special':keys.has('KeyH')?'smash':keys.has('KeyL')?'drop':keys.has('KeyJ')?'clear':null;return {move,side,jump:edges.has('Space')||edges.has('KeyK'),shot};}
+  function input(){const stick=window.ArcadeJoystick?.axes;const move=Number(keys.has('ArrowRight')||keys.has('KeyD'))-Number(keys.has('ArrowLeft')||keys.has('KeyA')),side=Number(keys.has('ArrowDown')||keys.has('KeyS'))-Number(keys.has('ArrowUp')||keys.has('KeyW'));let shot=edges.has('KeyE')?'special':keys.has('KeyH')?'smash':keys.has('KeyL')?'drop':keys.has('KeyJ')?'clear':null;return {move:stick?.active?stick.x:move,side:stick?.active?stick.y:side,jump:edges.has('Space')||edges.has('KeyK'),shot};}
   function events(){for(const event of match.events.splice(0)){sound.event(event);if(event.type==='point')$('#bd-live').textContent=(event.side?'AI':'You')+' scored. '+match.score[0]+' to '+match.score[1]+'. '+event.reason;if(event.type==='finish'){record.matches++;if(event.winner===0)record.wins++;record.bestRally=Math.max(record.bestRally,match.bestRally);try{localStorage.setItem('pq-badminton-records',JSON.stringify(record));}catch{}updateRecord();$('#bd-live').textContent=(event.winner===0?'You win.':'AI wins.')+' Final score '+match.score.join(' to ');showDialog('finished');}}}
 
   /* ------------------------------------------------------------------ court */
@@ -203,7 +204,7 @@
       hand={x:shoulder.x+dir*Math.cos(armAngle)*reach*k,y:shoulder.y+Math.sin(armAngle)*reach*k},
       elbow={x:shoulder.x+dir*5*k,y:shoulder.y+3*k},
       skin=p.character==='dora'?'#fff4df':(assets.colors[p.character]?.S||assets.palette.S),
-      sleeve={explorer:'#df5c43',soldier:'#e6e5d4',mystic:'#2455aa',dora:'#28a9dd',goku:'#ef923a',nezha:'#db5065'}[p.character];
+      sleeve={explorer:'#df5c43',soldier:'#e6e5d4',mystic:'#2455aa',dora:'#28a9dd',goku:'#ef923a',nezha:'#db5065',astro:'#ffcb8b',happy:'#dc3a3e',wuwa:'#196bc6'}[p.character];
     const arm=(a,b,col,thickness)=>{const n=Math.max(1,Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)));for(let i=0;i<=n;i++)rect(ctx,snap(a.x+(b.x-a.x)*i/n-thickness/2),snap(a.y+(b.y-a.y)*i/n-thickness/2),thickness,thickness,col);};
     arm(shoulder,elbow,sleeve,3*k);arm(elbow,hand,skin,2.5*k);
     ctx.save();ctx.translate(snap(hand.x),snap(hand.y));ctx.scale(dir*k,k);ctx.rotate(angle);ctx.drawImage(racket,-8,-25);ctx.restore();
