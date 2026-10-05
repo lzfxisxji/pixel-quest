@@ -12,3 +12,4 @@
 .bd-fullscreen-tools,.bd-fs-touch{display:none!important}.badminton-screen:fullscreen .bd-fullscreen-tools{display:flex!important;position:absolute;top:8px;right:10px;z-index:5;gap:7px}.bd-fullscreen-tools button{background:#203e45;color:#d5e7cb;border:1px solid #728d82;border-radius:4px;padding:6px 11px;font-size:17px}
 @media(pointer:coarse){.badminton-screen:fullscreen #bd-game{height:calc(100% - 70px)}.badminton-screen:fullscreen .bd-fs-touch{display:flex!important;position:absolute;bottom:4px;left:5%;width:90%;z-index:3}}
 @media(max-width:700px){.badminton-screen:not(:fullscreen):has(.bd-modal:not([hidden])){min-height:330px;aspect-ratio:auto}.bd-touch button{min-width:40px;height:48px}}
+.bd-characters{grid-template-columns:repeat(9,minmax(0,1fr))}.badminton-screen:has(.bd-setup:not([hidden])){min-height:540px}@media(max-width:700px){.bd-characters{grid-template-columns:repeat(3,minmax(0,1fr))}.badminton-screen:has(.bd-setup:not([hidden])){min-height:720px}}

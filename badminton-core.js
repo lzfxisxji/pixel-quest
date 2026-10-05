@@ -22,7 +22,7 @@
     mystic:{name:'Third-eye orbit',description:'A towering lob that pushes the opponent to the baseline.',color:'#cfabff',vy:-310,drag:.0045,target:'back'},
     dora:{name:'Air cannon',description:'A powerful clear; the follow-through gives a 2-second speed boost.',color:'#b6f6ff',vy:-210,drag:.0025,target:'open'},
     goku:{name:'Kamehameha smash',description:'A forceful steep shot in the air; a power clear on the ground.',color:'#77d5ff',vy:40,drag:.0018,target:'open'},
-    nezha:{name:'Crimson ribbon drop',description:'A deceptive, curling drop into the front court.',color:'#ff8dad',vy:-165,drag:.0065,target:'front'}
+    astro:{name:'Atomic drive',description:'A focused blue energy drive into the open court.',color:'#8beaff',vy:-145,drag:.0022,target:'open'},happy:{name:'Iron fist smash',description:'A forceful mech-assisted deep clear.',color:'#ffc96d',vy:-230,drag:.0028,target:'back'},wuwa:{name:'Tidal drop',description:'A curling water shot into the front court.',color:'#75e4ff',vy:-170,drag:.006,target:'front'},nezha:{name:'Crimson ribbon drop',description:'A deceptive, curling drop into the front court.',color:'#ff8dad',vy:-165,drag:.0065,target:'front'}
   });
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   // Footwork has two axes. x runs along the 13.4 m length; z runs across the court

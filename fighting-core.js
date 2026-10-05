@@ -1,6 +1,7 @@
 /* Standalone combat simulation. Shares no adventure, kart or badminton state. */
 (function(root){'use strict';
 const HEROES={explorer:{name:'Pixel Explorer',special:'Fireball',ultimate:'Star Rush',color:'#ffb64b'},soldier:{name:'Commando',special:'Spread Shot',ultimate:'Thunder Barrage',color:'#79caff'},mystic:{name:'Three-Eyed Kid',special:'Returning Arrow',ultimate:'Third Eye Burst',color:'#ba9cff'},dora:{name:'Doraemon',special:'Air Cannon',ultimate:'Super Air Cannon',color:'#71e0ec'},goku:{name:'Son Goku',special:'Kamehameha',ultimate:'Super Saiyan Wave',color:'#ffc451'},nezha:{name:'Nezha',special:'Qiankun Ring',ultimate:'Red Sash Storm',color:'#ff789e'}};
+Object.assign(HEROES,{"astro":{"name":"Astro Boy","special":"Energy Ball","ultimate":"Atomic Cannon","color":"#83dce8"},"happy":{"name":"Happy Hero","special":"Iron Fist","ultimate":"Flame Impact","color":"#f3b857"},"wuwa":{"name":"Wu Wa","special":"Water Jet","ultimate":"Tidal Wave","color":"#70d9ff"}});
 const {COMBOS}=typeof module==='object'?require('./fighting-combos.js'):root.PixelFightingCombos;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 class Match{
