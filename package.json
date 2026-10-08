@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js --dev",
-    "check": "node --check game.js && node --check character-assets.js && node --check badminton-view.js && node --check badminton-core.js && node --check badminton.js && node --check fighting-core.js && node --check fighting.js && node --check tank-core.js && node --check tank-assets.js && node --check tank.js && node --check bomber-core.js && node --check bomber-assets.js && node --check bomber.js && node --check hammer-core.js && node --check hammer-assets.js && node --check hammer-view.js && node --check blocks-core.js && node --check blocks.js && node --check keybindings.js && node --check key-settings.js && node --check astro-assets.js && node --check happy-assets.js && node --check wuwa-assets.js && node --check frost-core.js && node --check frost.js && node --check frost-view.js && node --check frost-ai.js && node --check mode-characters.js && node --check fighting-sprites.js && node --check fighting-combos.js && node --check island-core.js && node --check island-stages.js && node --check island-assets.js && node --check island-view.js && node --check island.js && node --check touch-joystick.js",
-    "test": "node test-game.cjs && node test-badminton.cjs && node test-fighting.cjs && node test-fighting-protection.cjs && node test-tank.cjs && node test-bomber.cjs && node test-hammer.cjs && node test-blocks.cjs && node test-keybindings.cjs && node test-frost.cjs && node test-nine-heroes.cjs && node test-island.cjs && node test-island-double-jump.cjs && node test-island-campaign.cjs",
+    "check": "node --check game.js && node --check character-assets.js && node --check badminton-view.js && node --check badminton-core.js && node --check badminton.js && node --check fighting-core.js && node --check fighting.js && node --check tank-core.js && node --check tank-assets.js && node --check tank.js && node --check bomber-core.js && node --check bomber-assets.js && node --check bomber.js && node --check hammer-core.js && node --check hammer-assets.js && node --check hammer-view.js && node --check blocks-core.js && node --check blocks.js && node --check keybindings.js && node --check key-settings.js && node --check astro-assets.js && node --check happy-assets.js && node --check wuwa-assets.js && node --check frost-core.js && node --check frost.js && node --check frost-view.js && node --check frost-ai.js && node --check mode-characters.js && node --check fighting-sprites.js && node --check fighting-combos.js && node --check island-core.js && node --check island-stages.js && node --check island-assets.js && node --check island-view.js && node --check island.js && node --check touch-joystick.js && node --check maze-core.js && node --check maze.js",
+    "test": "node test-game.cjs && node test-badminton.cjs && node test-fighting.cjs && node test-fighting-protection.cjs && node test-fighting-identities.cjs && node test-tank.cjs && node test-bomber.cjs && node test-hammer.cjs && node test-blocks.cjs && node test-keybindings.cjs && node test-frost.cjs && node test-nine-heroes.cjs && node test-island.cjs && node test-island-double-jump.cjs && node test-island-campaign.cjs",
     "check-menu": "node check-menu.cjs",
     "check-footwork": "node check-badminton-move.cjs",
     "check-lobby": "node check-lobby.cjs",
@@ -17,7 +17,7 @@
     "check-grip": "node check-badminton-grip.cjs",
     "check-hammer-visual": "node check-hammer-visual.cjs",
     "check-online": "node check-online.cjs",
-    "verify": "npm run check && npm test && npm run check-menu && npm run check-lobby && npm run check-hero && npm run check-brand && npm run check-home-nav && npm run check-continue && npm run check-footwork && npm run check-grip && npm run check-tank && npm run check-bomber && npm run check-hammer-visual && npm run soak-bomber && npm run check-arena && npm run check-blocks && npm run check-keys && npm run check-astro && npm run check-happy && npm run check-wuwa && npm run check-frost",
+    "verify": "npm run check && npm test && npm run check-menu && npm run check-lobby && npm run check-hero && npm run check-brand && npm run check-home-nav && npm run check-continue && npm run check-footwork && npm run check-grip && npm run check-tank && npm run check-bomber && npm run check-hammer-visual && npm run soak-bomber && npm run check-arena && npm run check-blocks && npm run check-keys && npm run check-astro && npm run check-happy && npm run check-wuwa && npm run check-frost && npm run check-maze",
     "verify-local": "npm run verify && npm run check-online",
     "verify-online": "node check-online.cjs https://lzfxisxji.github.io/pixel-quest/",
     "check-tank": "node check-tank.cjs",
@@ -31,9 +31,13 @@
     "check-wuwa": "node check-wuwa.cjs",
     "test-frost": "node test-frost.cjs",
     "check-frost": "node check-frost.cjs",
+    "check-maze": "node check-maze.cjs",
     "check-nine-heroes": "node check-nine-heroes.cjs",
     "test-island": "node test-island.cjs && node test-island-double-jump.cjs && node test-island-campaign.cjs",
     "check-island": "node check-island.cjs",
-    "check-touch": "node check-touch-joystick.cjs && node check-touch-longpress.cjs && node check-touch-strip.cjs"
+    "check-fighting-identities": "node check-fighting-identities.cjs",
+    "check-touch": "node check-touch-joystick.cjs && node check-touch-longpress.cjs && node check-touch-overlay.cjs",
+    "test-assault": "node test-assault.cjs && node test-assault-solo.cjs && node test-assault-coop.cjs",
+    "check-assault": "node check-assault.cjs && node check-assault-solo.cjs"
   }
 }

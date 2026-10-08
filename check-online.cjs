@@ -19,8 +19,8 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
     pass('home page returns 200 with the expected title and brand');
 
     assert(await page.locator('#arcade-lobby').isVisible(), 'arcade lobby must be visible');
-    assert.equal(await page.locator('.lobby-card').count(), 9);
-    pass('arcade lobby shows all nine mode cards');
+    assert.equal(await page.locator('.lobby-card').count(), 11);
+    pass('arcade lobby shows all eleven mode cards');
 
     for (const [id, url, api] of [
       ['play-badminton', 'badminton', 'PixelBadminton'],
@@ -31,13 +31,15 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
       ['play-frost', 'frost', 'PixelFrost'],
       ['play-island', 'island', 'PixelIsland'],
       ['play-assault', 'assault', 'PixelAssault'],
+      ['play-gomoku', 'gomoku', 'PixelGomoku'],
+      ['play-maze', 'maze', 'PixelMaze'],
     ]) {
       await page.goto(SITE);
       await page.waitForFunction(() => window.PixelQuest?.state === 'title');
       await page.locator(`[data-launch=${id}]`).click();
       await page.waitForURL('**/' + url + '.html');
       await page.waitForFunction(a => !!window[a], api);
-      for (const g of ['PixelQuest', 'PixelBadminton', 'PixelTank', 'PixelFighting', 'PixelBomber', 'PixelBlocks', 'PixelFrost', 'PixelIsland', 'PixelAssault'].filter(x => x !== api)) {
+      for (const g of ['PixelQuest', 'PixelBadminton', 'PixelTank', 'PixelFighting', 'PixelBomber', 'PixelBlocks', 'PixelFrost', 'PixelIsland', 'PixelAssault', 'PixelGomoku', 'PixelMaze'].filter(x => x !== api)) {
         assert.equal(await page.evaluate(k => typeof window[k], g), 'undefined',
           `${url}.html must not load ${g}`);
       }
@@ -54,7 +56,7 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
       await page.waitForFunction(() => window.PixelQuest?.state === 'title');
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         `horizontal overflow at ${w}px`);
-      for (const id of ['play', 'play-badminton', 'play-tank', 'play-fighting', 'play-bomber', 'play-blocks', 'play-frost', 'play-island', 'play-assault']) {
+      for (const id of ['play', 'play-badminton', 'play-tank', 'play-fighting', 'play-bomber', 'play-blocks', 'play-frost', 'play-island', 'play-assault', 'play-gomoku', 'play-maze']) {
         assert(await page.locator(`[data-launch=${id}]`).isVisible(), `${id} card hidden at ${w}px`);
       }
     }
