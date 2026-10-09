@@ -1,0 +1,5 @@
+const assert=require('node:assert/strict'),C=require('./jungle-core.js'),A=require('./jungle-ai.js');
+const blank=()=>Array(63).fill(0);
+const stats=[];for(const tier of ['easy','normal','hard','expert']){const s=C.state(),r=A.choose(s,tier,{budget:3000});assert(C.moves(s).some(m=>m.from===r.move.from&&m.to===r.move.to));stats.push(r);let b=blank();b[10]=2;b[62]=-8;const win=A.choose(C.state(b),tier);assert.equal(win.move.to,3);b=blank();b[52]=-2;b[51]=8;const defend=A.choose(C.state(b),tier);if(tier!=='easy')assert.equal(defend.move.to,52);for(let k=0,game=C.state();k<16&&game.winner===null;k++){const r=A.choose(game,tier,{budget:120,maxNodes:4000});assert(C.moves(game).some(m=>m.from===r.move.from&&m.to===r.move.to));game=C.step(game,r.move)}}
+assert.equal(stats[0].depth,0);assert.equal(stats[1].depth,2);assert.equal(stats[2].depth,3);assert(stats[3].depth>stats[2].depth);assert(stats[3].tableSize>0);assert(stats[3].nodes>stats[2].nodes);console.log('PASS all tiers immediate win, stronger tiers den defense, legal consecutive play, actual strategy depths',stats.map(r=>({depth:r.depth,nodes:r.nodes,table:r.tableSize})));
+

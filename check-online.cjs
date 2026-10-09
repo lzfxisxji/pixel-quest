@@ -31,15 +31,15 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
       ['play-frost', 'frost', 'PixelFrost'],
       ['play-island', 'island', 'PixelIsland'],
       ['play-gomoku', 'gomoku', 'PixelGomoku'],
-      ['play-maze', 'maze', 'PixelMaze'],
       ['play-number', 'number', 'PixelNumberPuzzle'],
+      ['play-jungle', 'jungle', 'PixelJungle'],
     ]) {
       await page.goto(SITE);
       await page.waitForFunction(() => window.PixelQuest?.state === 'title');
       await page.locator(`[data-launch=${id}]`).click();
       await page.waitForURL('**/' + url + '.html');
       await page.waitForFunction(a => !!window[a], api);
-      for (const g of ['PixelQuest', 'PixelBadminton', 'PixelTank', 'PixelFighting', 'PixelBomber', 'PixelBlocks', 'PixelFrost', 'PixelIsland', 'PixelGomoku', 'PixelMaze', 'PixelNumberPuzzle'].filter(x => x !== api)) {
+      for (const g of ['PixelQuest', 'PixelBadminton', 'PixelTank', 'PixelFighting', 'PixelBomber', 'PixelBlocks', 'PixelFrost', 'PixelIsland', 'PixelGomoku', 'PixelNumberPuzzle', 'PixelJungle'].filter(x => x !== api)) {
         assert.equal(await page.evaluate(k => typeof window[k], g), 'undefined',
           `${url}.html must not load ${g}`);
       }
@@ -56,7 +56,7 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
       await page.waitForFunction(() => window.PixelQuest?.state === 'title');
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
         `horizontal overflow at ${w}px`);
-      for (const id of ['play', 'play-badminton', 'play-tank', 'play-fighting', 'play-bomber', 'play-blocks', 'play-frost', 'play-island', 'play-gomoku', 'play-maze', 'play-number']) {
+      for (const id of ['play', 'play-badminton', 'play-tank', 'play-fighting', 'play-bomber', 'play-blocks', 'play-frost', 'play-island', 'play-gomoku', 'play-number', 'play-jungle']) {
         assert(await page.locator(`[data-launch=${id}]`).isVisible(), `${id} card hidden at ${w}px`);
       }
     }
