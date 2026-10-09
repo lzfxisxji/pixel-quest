@@ -13,6 +13,18 @@ const SITE = process.argv[2] || process.env.PQ_SITE || 'http://localhost:4173/';
     await page.waitForFunction(() => !!window.PixelMaze, null, { timeout: 8000 });
     assert.equal(await page.evaluate(() => typeof window.MazeCore), 'object', 'MazeCore engine must load');
     pass('maze.html boots and exposes MazeCore + PixelMaze');
+    assert(await page.locator('#setup').isVisible(), 'initial character selection visible');
+    assert.equal(await page.locator('#modal').isVisible(), false, 'no pause/game-over overlay before start');
+    assert.equal(await page.evaluate(() => PixelMaze.game.state), 'ready');
+    await page.click('#start');
+    assert.equal(await page.locator('#setup').isVisible(), false);
+    assert.equal(await page.locator('#modal').isVisible(), false);
+    await page.click('#pause');
+    assert(await page.locator('#modal').isVisible());
+    assert.equal(await page.locator('#setup').isVisible(), false);
+    await page.click('#resume');
+    assert.equal(await page.locator('#modal').isVisible(), false);
+    pass('initial setup -> actual start -> pause -> resume has exactly one visible overlay');
 
     // deterministic logic tests (stop rAF double-advance)
     await page.evaluate(() => { PixelMaze.setTestMode(true); });

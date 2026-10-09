@@ -1,5 +1,6 @@
 :root{color-scheme:dark;--gold:#ffc164;--ink:#eee8d6;--muted:#9cb4c0;--accent:#b06ad6}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:#111c25;color:var(--ink);font-family:Arial,"Microsoft Yahei",sans-serif;background-image:radial-gradient(ellipse at 50% 60%,#3a344755,transparent 70%)}
 main{max-width:1280px;margin:auto;padding:0 32px}
 button,select{font:inherit}
@@ -25,7 +26,7 @@ h1 span,h2 span{color:var(--gold)}
 .top .controls{display:flex;gap:6px}
 .top button{padding:5px 9px;font-size:11px}
 .screen{position:relative;aspect-ratio:28/31;background:#0c1622}
-canvas{display:block;width:100%;height:100%;image-rendering:pixelated;outline:none}
+#game{display:block;width:100%;height:100%;image-rendering:pixelated;outline:none}
 .overlay{position:absolute;inset:0;background:linear-gradient(#10232bec,#182432f8);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;overflow:auto}
 .setup-content{width:min(560px,95%)}
 .setup-content h2{font-size:24px;margin:8px 0}

@@ -1,0 +1,42 @@
+# 数字华容道 / NUMBER PUZZLE
+
+入口 `/number.html`，独立文件前缀 `number-`，无摇杆和角色系统。
+
+目前 `number-config.js` 的两个配置为空。游戏完整可玩，成绩保存在本机浏览器；界面明确标注本机排行。没有配置真实 Supabase 项目之前，不存在已上线的全球共享排行榜。
+
+## 配置在线共享排行
+
+1. 创建 Supabase 项目（可使用免费计划），在 SQL Editor 运行 `number-supabase.sql`。脚本只创建本模式的两个表和 RPC。
+2. 在 Authentication → Providers / Sign In 设置启用 Anonymous Sign-ins。玩家无需填写注册信息和密码，浏览器会取得匿名会话。
+3. 从项目 Connect / API Keys 复制 Project URL 和 **publishable key**（或旧版 anon key）。填写 `number-config.js` 的 `supabaseUrl`、`supabasePublicKey`。严禁放 service_role、sb_secret 或管理员密钥。
+4. 将本模式文件随项目一起发布到 GitHub Pages。确认站点可以连接 Supabase 和 `esm.sh`（Supabase JS 固定版本 2.57.4）。在线挑战开始失败时会显示错误，不会把未经验证的本机成绩冒充在线成绩。
+5. 用两个不同浏览器/设备完成对局，检查共享排行；在 Network 中确认直接 POST/PATCH/DELETE 两张表均被拒绝。检查未完成棋盘、错误移动记录、其他匿名用户的 session ID 和超频请求被拒绝。上线前必须在实际项目执行这些权限检查。
+
+## 成绩验证流程
+
+- `np_create_session`：服务端验证昵称/模式、生成必定有解且有最低曼哈顿距离的初始棋盘，避免同一匿名用户连续同模式重复开局。初始棋盘和昵称存在不可直接写入的会话表。
+- 第一次合法落子调用 `np_begin`，服务端验证第一步并记录自身时间。
+- 通关调用 `np_finish`，只提交 session ID 和点击位置数组。服务端回放每一手，检查上下左右相邻、最终排列、合法步数与时间限制，自行计算成绩和名次。客户端不能提交排名、昵称、模式、日期或通关时间来覆盖记录。
+- 在线榜单计时采用服务端开始接收至通关接收的时间，会包含网络往返/提交等待，与屏幕本地计时可能有少量差异；通关后显示实际榜单计时。不上传断网时完成的成绩来补算全球记录。
+- 同一昵称大小写不敏感，每个模式按时间、步数、完成时间独立挑选最佳成绩。更差记录不会替换最佳记录。默认展示20条，可以展开到100条；个人名次可超过100。
+
+## 安全和限制
+
+两张表启用 RLS，没有普通客户端表访问策略，并撤销 anon/authenticated 的直接表权限。只有范围受限的 SECURITY DEFINER RPC 可以写入；函数固定 search_path，使用 auth.uid 校验会话归属，行锁和事务锁阻止并发绕过。榜单 RPC 仅返回公开成绩字段，不返回用户 ID 或会话 ID。
+
+每个匿名 UID 最多3次开局/分钟、20次/小时，完成提交间隔至少5秒。会话24小时过期；移动记录上限10000步，每步时间最低40ms为基础异常过滤。同一会话重复提交幂等。
+
+匿名身份可被重新创建，昵称也可被其他人使用，因此此方案不能认证真实玩家或绝对防作弊。合法路径回放不能阻止自动求解器，也不能证明玩家未查看棋盘后延迟第一步。需要更强保护时，应加 Supabase CAPTCHA/Turnstile 的前端验证及服务端网关 IP 限流、异常成绩审计；不要仅依赖匿名 UID 限流。当前实现没有集成 CAPTCHA 或 IP 网关。免费计划的额度与滥用风险需在上线项目观察。
+
+服务端没有接收客户端通关时间，任何修改本机计时的操作都不会影响在线排名。配置为空时的本机榜单没有这些服务端校验能力。
+
+参考：Supabase 官方匿名登录、API Keys 和 RLS 文档。
+- https://supabase.com/docs/guides/auth/auth-anonymous
+- https://supabase.com/docs/guides/getting-started/api-keys
+- https://supabase.com/docs/guides/database/postgres/row-level-security
+
+## 5×5 模式升级（2026-10-09）
+
+新增 24 个数字和 1 个空格，3×3、4×4、5×5 三种规格独立排行。5×5 从已完成状态执行 700 次合法相邻移动，禁止立即反向，要求最低曼哈顿距离 60，排除已完成和上次相同棋盘。
+
+已有 Supabase 项目请重新执行更新后的 `number-supabase.sql`：脚本会原位扩展两个表的模式约束及生成/排行榜 RPC，不删除原有会话或成绩。配置未启用时，5×5 仍为本机排行；实际在线项目尚需应用 SQL 并验证。

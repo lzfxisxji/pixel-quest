@@ -82,7 +82,7 @@
 
   function startGame() {
     const diff = $('#difficulty').value;
-    localStorage.setItem('pq-hero', selected);
+    try { localStorage.setItem('pq-hero', selected); } catch {}
     game = new window.MazeCore.MazeGame(diff, selected);
     game.onEat = () => audio.sfx('eat');
     game.onPower = () => audio.sfx('power');
@@ -90,16 +90,19 @@
     game.onClear = () => onEnd('clear');
     game.begin();
     setup.hidden = true; modal.hidden = true; paused = false; prevState = 'playing';
+    held = []; $('#retry').hidden = false; $('#next').hidden = true; $('#resume').hidden = true;
     audio.init();
   }
 
   function onEnd(kind) {
-    const best = Number(localStorage.getItem('pq-maze-best') || 0);
-    if (game.score > best) localStorage.setItem('pq-maze-best', String(game.score));
+    try { const best = Number(localStorage.getItem('pq-maze-best') || 0);
+      if (game.score > best) localStorage.setItem('pq-maze-best', String(game.score)); } catch {}
+    setup.hidden = true; paused = false; held = []; game.setDir(null);
     $('#modal-tag').textContent = kind === 'clear' ? 'STAGE CLEAR' : 'GAME OVER';
     $('#modal-title').textContent = kind === 'clear' ? '过关！' : '游戏结束';
     $('#modal-copy').innerHTML = `得分 <b>${game.score}</b> · 用时 ${game.time.toFixed(0)}s · 能量点 ${game.dotsCollected} · 击败 ${game.enemiesDefeated}`;
-    $('#retry').textContent = kind === 'clear' ? '下一关 ▶' : '再来一局 ↻';
+    $('#retry').textContent = '再来一局 ↻';
+    $('#retry').hidden = kind === 'clear';
     $('#next').hidden = kind !== 'clear';
     $('#resume').hidden = true;
     $('#menu').hidden = false;
@@ -108,7 +111,8 @@
   }
 
   $('#start').onclick = startGame;
-  $('#retry').onclick = () => { if (prevState === 'clear' && game.state === 'clear') game.nextStage(); else { game = new window.MazeCore.MazeGame(game.diff, game.character); game.onEat = () => audio.sfx('eat'); game.onPower = () => audio.sfx('power'); game.onEatGhost = () => audio.sfx('ghost'); game.onClear = () => onEnd('clear'); game.begin(); } modal.hidden = true; paused = false; prevState = 'playing'; };
+  $('#retry').onclick = startGame;
+  $('#next').onclick = () => { if (game.state !== 'clear') return; game.nextStage(); held = []; game.setDir(null); modal.hidden = true; paused = false; prevState = 'playing'; };
   $('#menu').onclick = () => location.href = './';
   $('#pause').onclick = togglePause;
   $('#resume').onclick = () => { modal.hidden = true; paused = false; };
@@ -123,9 +127,10 @@
   function pressDir(name) { if (!held.includes(name)) held.push(name); game.setDir(name); }
   function releaseDir(name) { held = held.filter(d => d !== name); if (held.length) game.setDir(held[held.length - 1]); else game.setDir(null); }
   window.addEventListener('keydown', e => {
+    if (['SELECT','INPUT','TEXTAREA'].includes(e.target.tagName)) return;
     if (e.repeat) return;
     if (e.code === 'KeyP' || e.code === 'Escape') { togglePause(); return; }
-    const d = KEYMAP[e.code]; if (d) { e.preventDefault(); audio.init(); pressDir(d); }
+    const d = KEYMAP[e.code]; if (d && game.state === 'playing' && !paused) { e.preventDefault(); audio.init(); pressDir(d); }
   });
   window.addEventListener('keyup', e => { const d = KEYMAP[e.code]; if (d) releaseDir(d); });
   window.ArcadeJoystick && window.ArcadeJoystick.bind(
