@@ -1,0 +1,12 @@
+/* Independent deterministic engine. The same file runs locally and on the server. */
+(function(root){'use strict';const GOAL=57,START=[0,13,26,39],SAFE=new Set(START),COLORS=['RED','YELLOW','BLUE','GREEN'];
+const copy=s=>JSON.parse(JSON.stringify(s));
+function initial(){return {planes:Array.from({length:4},()=>Array(4).fill(-1)),turn:0,phase:'roll',dice:null,winner:null,moves:0,last:null}}
+function dice(rng=globalThis.crypto){if(!rng?.getRandomValues)throw Error('浏览器不支持安全骰子');const b=new Uint32Array(1);do{rng.getRandomValues(b)}while(b[0]>=4294967292);return b[0]%6+1}
+function destination(progress,value,color){if(progress<0)return value===6?{to:0,path:[0],jump:0}:null;if(progress>=GOAL)return null;let to=progress+value;const path=[];for(let p=progress+1;p<=progress+value;p++)path.push(p>GOAL?2*GOAL-p:p);if(to>GOAL)to=2*GOAL-to;let jump=0;if(to<52){if(to===16){to=28;jump=12;path.push(to)}else if((START[color]+to)%4===color&&to+4<52){to+=4;jump=4;path.push(to);if(to===16){to=28;jump+=12;path.push(to)}}}return {to,path,jump}}
+function preview(s,color,index,value=s.dice){if(!Number.isInteger(index)||index<0||index>3||!Number.isInteger(value)||value<1||value>6)return null;const from=s.planes[color][index],dest=destination(from,value,color);if(!dest)return null;const captured=[];if(dest.to<52){const cell=(START[color]+dest.to)%52;if(!SAFE.has(cell))for(let c=0;c<4;c++)if(c!==color)for(let j=0;j<4;j++){const p=s.planes[c][j];if(p>=0&&p<52&&(START[c]+p)%52===cell)captured.push([c,j])}}return {color,index,from,...dest,captured}}
+function legal(s){if(s.phase!=='choose'||s.winner!==null)return [];return [0,1,2,3].filter(i=>preview(s,s.turn,i))}
+function roll(s,value){if(s.phase!=='roll'||s.winner!==null||!Number.isInteger(value)||value<1||value>6)throw Error('现在不能掷骰');const n=copy(s);n.dice=value;n.phase='choose';n.last={type:'roll',color:s.turn,value};if(!legal(n).length){n.phase='roll';n.turn=(n.turn+1)%4;n.last={type:'skip',color:s.turn,value}}return n}
+function move(s,index){if(!legal(s).includes(index))throw Error('请选择合法飞机');const p=preview(s,s.turn,index),n=copy(s);n.planes[s.turn][index]=p.to;for(const [c,i]of p.captured)n.planes[c][i]=-1;n.moves++;n.last={type:'move',...p,value:s.dice};if(n.planes[s.turn].every(p=>p===GOAL)){n.winner=s.turn;n.phase='finished'}else{n.phase='roll';if(s.dice!==6)n.turn=(s.turn+1)%4}return n}
+const api={GOAL,START,SAFE,COLORS,initial,dice,destination,preview,legal,roll,move};root.FlightCore=api;if(typeof module!=='undefined')module.exports=api;
+})(globalThis);
