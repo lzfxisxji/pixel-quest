@@ -1,0 +1,5 @@
+/* Grid hops temporarily override the existing final-position transition. */
+.plane.travelling{transition:none!important;z-index:8;pointer-events:none;will-change:left,top,transform}
+.plane.travelling canvas{filter:drop-shadow(0 3px 0 #101c2660)}
+.plane.flying canvas{filter:drop-shadow(-3px 4px 0 #f9dea080)}
+.plane.landing-hit{z-index:7}

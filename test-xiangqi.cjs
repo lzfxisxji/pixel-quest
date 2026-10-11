@@ -1,0 +1,27 @@
+const assert=require('node:assert/strict'),C=require('./xiangqi-core.js'),A=require('./xiangqi-ai.js');
+let id=100;const pos=(pieces,turn=1)=>{const s=C.initial();s.board=Array(90).fill(null);for(const [x,y,t,side]of pieces)s.board[C.at(x,y)]={t,s:side,id:++id};s.turn=turn;s.history=[];s.positions=[C.key(s)];return s};
+const base=[[4,9,'K',1],[4,0,'K',-1],[4,5,'P',1]],has=(s,x,y,a,b)=>C.legal(s).some(m=>m.from===C.at(x,y)&&m.to===C.at(a,b));
+assert.equal(C.initial().board.filter(Boolean).length,32);assert.equal(C.legal(C.initial()).length,44);
+let s=pos([...base,[0,9,'R',1],[0,7,'P',1],[0,6,'R',-1]]);assert(has(s,0,9,0,8));assert(!has(s,0,9,0,6));
+s=pos([...base,[1,9,'H',1],[1,8,'P',1]]);assert(!has(s,1,9,2,7));assert(has(s,1,9,3,8));
+s=pos([...base,[2,9,'E',1],[3,8,'P',1]]);assert(!has(s,2,9,4,7));s=pos([...base,[2,5,'E',1]]);assert(!has(s,2,5,0,3));assert(has(s,2,5,0,7));
+for(let screens=0;screens<=2;screens++){s=pos([...base,[0,9,'C',1],[0,4,'R',-1],...Array.from({length:screens},(_,i)=>[0,6+i,'P',1])]);assert.equal(has(s,0,9,0,4),screens===1)}
+s=pos([...base,[0,6,'P',1]]);assert(has(s,0,6,0,5));assert(!has(s,0,6,1,6));assert(!has(s,0,6,0,7));s=pos([...base,[0,4,'P',1]]);assert(has(s,0,4,1,4));assert(!has(s,0,4,0,5));
+s=pos([...base,[3,9,'A',1]]);assert(has(s,3,9,4,8));assert(!has(s,3,9,2,8));assert(has(s,4,9,4,8));assert(!has(s,4,9,4,7));s=pos([[3,7,'K',1],[4,0,'K',-1]]);assert(!has(s,3,7,3,6));assert(!has(s,3,7,2,7));
+s=pos([...base,[0,3,'P',-1]],-1);assert(has(s,0,3,0,4));assert(!has(s,0,3,1,3));assert(!has(s,0,3,0,2));s=pos([...base,[0,5,'P',-1],[2,4,'E',-1]],-1);assert(has(s,0,5,1,5));assert(!has(s,0,5,0,4));assert(!has(s,2,4,0,6));assert(has(s,2,4,0,2));
+s=pos([[4,9,'K',1],[4,0,'K',-1],[4,5,'R',1]]);assert(!has(s,4,5,3,5));assert(has(s,4,5,4,4));
+s=pos([...base,[0,9,'R',-1],[1,7,'H',1]]);assert(C.check(s.board,1));assert(!has(s,1,7,2,5));assert(has(s,4,9,4,8));
+s=pos([[3,9,'K',1],[4,0,'K',-1],[4,1,'R',1],[2,2,'H',1],[6,2,'H',1]],-1);assert(C.check(s.board,-1));assert.equal(C.adjudicate(s).winner,1);assert(s.reason.includes('CHECKMATE'));
+s=pos([[3,9,'K',1],[4,0,'K',-1],[3,1,'R',1],[5,1,'R',1]],-1);assert(!C.check(s.board,-1));assert.equal(C.adjudicate(s).winner,1);assert(s.reason.includes('STALEMATE'));
+let neutral=C.initial();for(let cycle=0;cycle<3;cycle++)for(const [x,y,a,b]of [[1,9,2,7],[1,0,2,2],[2,7,1,9],[2,2,1,0]])neutral=C.move(neutral,{from:C.at(x,y),to:C.at(a,b)});assert.equal(neutral.winner,0);
+let checking=pos([[4,9,'K',1],[5,0,'K',-1],[4,5,'P',1],[4,1,'R',1]]);for(let cycle=0;cycle<3;cycle++)for(const [x,y,a,b]of [[4,1,5,1],[5,0,4,0],[5,1,4,1],[4,0,5,0]])checking=C.move(checking,{from:C.at(x,y),to:C.at(a,b)});assert.equal(checking.winner,-1);assert(checking.reason.includes('长将'));
+// Repetition classification must retain piece identities, distinguish rooted exchanges and mixed checks.
+const r=C.initial();r.positions=Array(4).fill(C.key(r));r.history=Array.from({length:12},(_,i)=>({side:i%2?-1:1,check:false,chase:i%2?[]:[123]}));assert.equal(C.repetition(r).winner,-1);r.history[2].chase=[124];assert.equal(C.repetition(r).winner,0);r.history[2].chase=[123];r.history.forEach(h=>{h.chase=[123]});assert.equal(C.repetition(r).winner,0);
+let chasing=pos([...base,[0,4,'R',1],[2,2,'H',-1]]);for(let cycle=0;cycle<3;cycle++)for(const [x,y,a,b]of [[0,4,0,2],[2,2,3,4],[0,2,0,4],[3,4,2,2]])chasing=C.move(chasing,{from:C.at(x,y),to:C.at(a,b)});assert.equal(chasing.winner,-1);assert(chasing.reason.includes('长捉'));
+const rooted=pos([...base,[0,2,'R',1],[2,2,'H',-1],[2,0,'R',-1]]);assert(!C.threats(rooted.board,1).some(t=>t.target===rooted.board[C.at(2,2)].id));const mutual=pos([...base,[0,2,'R',1],[2,2,'R',-1]]);assert(!C.threats(mutual.board,1).some(t=>t.target===mutual.board[C.at(2,2)].id));
+s=pos([...base,[0,9,'R',1],[0,6,'H',-1]]);const n=C.move(s,{from:C.at(0,9),to:C.at(0,6)});assert.equal(n.board[C.at(0,6)].t,'R');assert.equal(n.history.at(-1).captured.t,'H');assert.equal(s.board[C.at(0,6)].t,'H');assert.equal(s.history.length,0);
+s=pos(base);s.quiet=119;s=C.move(s,{from:C.at(4,9),to:C.at(3,9)});assert.equal(s.winner,0);
+console.log('PASS 32-piece initial position, all special movement, checks, pins, checkmate, stalemate, repetition priorities, capture snapshots, natural limit');
+const metrics=[];for(const tier of ['easy','normal','hard','expert']){const result=A.choose(C.initial(),tier);assert(C.legal(C.initial()).some(m=>m.from===result.move.from&&m.to===result.move.to));metrics.push(result);let game=C.initial();for(let i=0;i<6;i++){const ai=A.choose(game,tier,{ms:tier==='expert'?300:150});assert(C.legal(game).some(m=>m.from===ai.move.from&&m.to===ai.move.to));game=C.move(game,ai.move);if(game.winner!==null)break}console.log('PASS AI',tier,result)}assert(metrics[2].nodes>metrics[1].nodes);assert(metrics[3].nodes>metrics[1].nodes);console.log('PASS distinct search tiers and legal AI playouts');
+let tactical=C.initial();for(let p=0;p<16;p++){const moves=C.legal(tactical);tactical=C.move(tactical,moves[(p*17+9)%moves.length])}const decisions=['easy','normal','hard','expert'].map(tier=>A.choose(tactical,tier,{rng:()=>.5, ms: tier==='expert'?6000:undefined}));assert(new Set(decisions.map(r=>r.move.from+':'+r.move.to)).size>=3);assert(decisions[3].hits>0);console.log('PASS strategic fixture: distinct decisions, expert transposition hits',decisions.map(d=>({tier:d.tier,move:d.move,depth:d.depth,hits:d.hits})));
+

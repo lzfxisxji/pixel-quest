@@ -1,0 +1,26 @@
+/* Independent Xiangqi engine. Red +1, black -1; row zero is black's back rank. */
+(function(root){'use strict';
+const TEXT={K:['将','帅'],A:['士','仕'],E:['象','相'],H:['马','马'],R:['车','车'],C:['炮','炮'],P:['卒','兵']},VALUE={K:20000,R:900,C:450,H:400,E:200,A:200,P:100};
+const at=(x,y)=>y*9+x,inside=(x,y)=>x>=0&&x<9&&y>=0&&y<10,palace=(s,x,y)=>x>=3&&x<=5&&(s===1?y>=7:y<=2),crossed=(s,y)=>s===1?y<=4:y>=5;
+function key(s){return s.turn+':'+s.board.map(p=>p?p.s+p.t:'_').join('')}
+function initial(){const board=Array(90).fill(null);let id=0;const put=(x,y,t,s)=>board[at(x,y)]={t,s,id:++id};for(const s of [-1,1]){const y=s===1?9:0;['R','H','E','A','K','A','E','H','R'].forEach((t,x)=>put(x,y,t,s));for(const x of [1,7])put(x,s===1?7:2,'C',s);for(const x of [0,2,4,6,8])put(x,s===1?6:3,'P',s)}const s={board,turn:1,quiet:0,plies:0,history:[],positions:[],winner:null,reason:''};s.positions=[key(s)];return s}
+function pseudo(board,from,attack=false){const p=board[from];if(!p)return [];const x=from%9,y=Math.floor(from/9),out=[];const add=(a,b)=>{if(inside(a,b)&&board[at(a,b)]?.s!==p.s)out.push(at(a,b))};
+ if(p.t==='R'||p.t==='C'){for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]]){let screen=false;for(let a=x+dx,b=y+dy;inside(a,b);a+=dx,b+=dy){const q=board[at(a,b)];if(p.t==='R'){if(!q)add(a,b);else{add(a,b);break}}else if(!screen){if(!q)add(a,b);else screen=true}else if(q){add(a,b);break}}}}
+ if(p.t==='H')for(const [dx,dy]of [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[-1,2],[1,-2],[-1,-2]]){const lx=x+(Math.abs(dx)===2?Math.sign(dx):0),ly=y+(Math.abs(dy)===2?Math.sign(dy):0);if(!board[at(lx,ly)])add(x+dx,y+dy)}
+ if(p.t==='E')for(const dx of [-2,2])for(const dy of [-2,2]){const a=x+dx,b=y+dy;if(inside(a,b)&&!crossed(p.s,b)&&!board[at(x+dx/2,y+dy/2)])add(a,b)}
+ if(p.t==='A')for(const dx of [-1,1])for(const dy of [-1,1])if(palace(p.s,x+dx,y+dy))add(x+dx,y+dy);
+ if(p.t==='K'){for(const [dx,dy]of [[1,0],[-1,0],[0,1],[0,-1]])if(palace(p.s,x+dx,y+dy))add(x+dx,y+dy);if(attack)for(const dy of [-1,1])for(let b=y+dy;inside(x,b);b+=dy){const q=board[at(x,b)];if(q){if(q.t==='K'&&q.s!==p.s)add(x,b);break}}}
+ if(p.t==='P'){add(x,y-p.s);if(crossed(p.s,y)){add(x-1,y);add(x+1,y)}}return out;
+}
+function apply(board,m){const b=board.slice();b[m.to]=b[m.from];b[m.from]=null;return b}
+function check(board,side){const k=board.findIndex(p=>p?.s===side&&p.t==='K');if(k<0)return true;return board.some((p,i)=>p?.s===-side&&pseudo(board,i,true).includes(k))}
+function legal(s,side=s.turn){if(s.winner!==null)return [];const out=[];s.board.forEach((p,from)=>{if(p?.s!==side)return;for(const to of pseudo(s.board,from)){const m={from,to};if(!check(apply(s.board,m),side))out.push(m)}});return out}
+function position(board,turn){return {board,turn,winner:null}}
+// A true root must be able to recapture legally after the threatened capture.
+function threats(board,side){const captures=legal(position(board,side),side).filter(m=>board[m.to]&&board[m.to].t!=='K'),out=[];for(const m of captures){const a=board[m.from],v=board[m.to];if(['K','P'].includes(a.t)||(v.t==='P'&&!crossed(v.s,Math.floor(m.to/9))))continue;const mutual=legal(position(board,-side),-side).some(n=>n.from===m.to&&n.to===m.from);if(a.t===v.t&&mutual)continue;const after=apply(board,m),rooted=legal(position(after,-side),-side).some(n=>n.to===m.to);if(rooted&&!(['H','C'].includes(a.t)&&v.t==='R'))continue;out.push({attacker:a.id,target:v.id})}return out}
+function repetition(s){const k=key(s),occ=[];s.positions.forEach((v,i)=>{if(v===k)occ.push(i)});if(occ.length<4)return null;const first=occ[occ.length-4],last=occ[occ.length-1],records=s.history.slice(first,last);const rank=side=>{const own=records.filter(r=>r.side===side);if(own.length&&own.every(r=>r.check))return 2;if(!own.length||own.some(r=>r.check||!r.chase.length))return 0;let common=new Set(own[0].chase);for(const r of own.slice(1))common=new Set(r.chase.filter(id=>common.has(id)));return common.size?1:0};const red=rank(1),black=rank(-1);return red===black?{winner:0,reason:'循环三次：双方同类长打或普通重复，判和'}:{winner:red>black?-1:1,reason:(red>black?'红':'黑')+'方'+(Math.max(red,black)===2?'长将':'长捉')+'循环三次，判负'}}
+function adjudicate(s){if(!legal(s).length){s.winner=-s.turn;s.reason=check(s.board,s.turn)?'将死 CHECKMATE':'困毙 STALEMATE：无合法走法判负';return s}const r=repetition(s);if(r){Object.assign(s,r);return s}if(s.quiet>=120){s.winner=0;s.reason='连续 60 回合无吃子，自然限着判和'}return s}
+function move(s,m){if(!legal(s).some(n=>n.from===m.from&&n.to===m.to))throw Error('非法走法');const p=s.board[m.from],captured=s.board[m.to],board=apply(s.board,m),isCheck=check(board,-s.turn),old=threats(s.board,s.turn),now=isCheck?[]:threats(board,s.turn),chase=[...new Set(now.filter(t=>t.attacker===p.id||!old.some(o=>o.attacker===t.attacker&&o.target===t.target)).map(t=>t.target))];const n={...s,board,turn:-s.turn,quiet:captured?0:s.quiet+1,plies:s.plies+1,winner:null,reason:'',history:[...s.history,{...m,side:s.turn,piece:p,captured,check:isCheck,chase}],positions:s.positions.slice()};n.positions.push(key(n));return adjudicate(n)}
+function finish(s,winner,reason){return {...s,winner,reason}}
+const api={TEXT,VALUE,at,palace,crossed,key,initial,pseudo,apply,check,legal,threats,repetition,adjudicate,move,finish,position};root.XiangqiCore=api;if(typeof module!=='undefined')module.exports=api;
+})(globalThis);
