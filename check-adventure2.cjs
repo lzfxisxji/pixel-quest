@@ -16,7 +16,7 @@ const SITE = process.argv[2] || ('file://' + require('path').resolve(__dirname, 
       const out = [];
       for (let i = 4; i < 8; i++) {
         const w = makeWorld(i);
-        out.push({ i, course: w.course && w.course.id, kind: w.kind, tiles: w.tiles.size, enemies: w.enemies.length, platforms: w.platforms.length, sinking: w.platforms.filter(p => p.sinking).length, flagX: w.flagX, length: w.length, hasFlag: w.hasFlag });
+        out.push({ i, course: w.course && w.course.id, kind: w.kind, tiles: w.tiles.size, enemies: w.enemies.length, platforms: w.platforms.length, sinking: w.platforms.filter(p => p.sinking).length, fadingCount: w.platforms.filter(p => p.fading).length, flagX: w.flagX, length: w.length, hasFlag: w.hasFlag });
       }
       return out;
     });
@@ -32,7 +32,13 @@ const SITE = process.argv[2] || ('file://' + require('path').resolve(__dirname, 
     assert(report[2].kind === 'bridge', `2-3 must be bridge (got ${report[2].kind})`);
     assert(report[2].sinking >= 3, `2-3 must have sinking platforms in the second half (got ${report[2].sinking})`);
     assert(report[0].kind === 'surface' && report[3].kind === 'castle', '2-1 surface and 2-4 castle');
-    pass('2-2 is underground; 2-3 has sinking platforms; 2-1 surface / 2-4 castle');
+    // 2-1 旗杆要紧贴末尾高台（新 flagX = (length-8)*16）
+    assert(report[0].flagX >= (report[0].length / 16 - 10) * 16, `2-1 flagX ${report[0].flagX} too far from end (length=${report[0].length})`);
+    // 2-2 后半段必须有 5 个 fading 平台
+    assert(report[1].platforms >= 5, `2-2 must have fading platforms in second half (got ${report[1].platforms})`);
+    const fading2 = report[1].fadingCount || 0;
+    assert(fading2 >= 5, `2-2 must have at least 5 fading platforms (got ${fading2})`);
+    pass('2-2 is underground; 2-3 has sinking platforms; 2-1 flag near end; 2-2 has fading platforms');
 
     assert(errors.length === 0, 'no runtime errors: ' + errors.join(' | '));
     pass('no runtime/page errors while building World 2');
