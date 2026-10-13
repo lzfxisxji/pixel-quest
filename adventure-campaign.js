@@ -1,0 +1,25 @@
+/* Original course layouts, using the NES world/area and warp progression. */
+(function(g){'use strict';const Bonus=typeof module!=='undefined'?require('./adventure-bonus.js'):g.AdventureBonus;const TOTAL=32,rows=[['surface','underground','treetops','castle'],['surface','underground','bridge','castle'],['night','night','treetops','castle'],['surface','underground','treetops','castle'],['surface','surface','treetops','castle'],['night','night','treetops','castle'],['surface','water','bridge','castle'],['surface','surface','surface','castle']],names={surface:'SUNRISE MEADOW',underground:'CRYSTAL CAVERN',treetops:'CLOUDTOP CROSSING',castle:'EMBER KEEP',night:'MOONLIT TRAIL',water:'CORAL CHANNEL',bridge:'SKY BRIDGE'};
+function info(index){if(!Number.isInteger(index)||index<0||index>=TOTAL)throw Error('Invalid adventure course');const world=Math.floor(index/4)+1,area=index%4+1,kind=rows[world-1][area-1];return {index,world,area,id:`${world}-${area}`,kind,name:names[kind],themeIndex:kind==='castle'?3:kind==='underground'||kind==='water'?1:kind==='treetops'||kind==='bridge'?2:0};}
+function migrate(s){if(!s)return null;const n=s.version===2?s.stage:[0,4,8,12][s.stage];if(!Number.isInteger(n)||n<0||n>=TOTAL)return null;return {...s,stage:n,version:2};}
+function build(index,legacy,legacy2,themes){const meta=info(index),w=index<4?legacy(index):index<8?legacy2(index-4):generated(meta,themes);Object.assign(w,{course:meta,kind:meta.kind,scene:'main',hasFlag:w.hasFlag!==false,portals:w.portals||[]});w.theme={...themes[meta.themeIndex]};if(meta.kind==='night')w.theme.sky='#17233f';if(meta.kind==='water')w.theme.sky='#17516b';if(index===0){w.portals=[portal(58,192,'bonus',128),portal(128,176,'returnMarker')];w.enemies=w.enemies.filter(e=>e.type!=='plant'||Math.abs(e.x-128*16)>32);}
+if(index===1)warpCavern(w,meta);
+if(index===13){const end=w.length/16-25;addPipe(w,end,2);w.portals.push(portal(end,192,'warp',16));}
+return Bonus.attach(w);}
+function tile(w,x,y,type='ground',content){w.tiles.set(`${x},${y}`,{x:x*16,y:y*16,w:16,h:16,type,content,bump:0});}
+function addPipe(w,x,h=2){for(let y=14-h;y<14;y++)for(let dx=0;dx<2;dx++)tile(w,x+dx,y,y===14-h?'pipeTop':'pipe');}
+function portal(x,y,type,target){return {x:x*16,y,w:32,h:16,type,target};}
+function generated(m,themes){const length=188+m.world*7+m.area*3,w={tiles:new Map(),collect:[],enemies:[],platforms:[],portals:[],length:length*16,flagX:(length-20)*16,exitX:(length-11)*16,checkpointX:Math.floor(length/2)*16,theme:themes[m.themeIndex]};const watery=m.kind==='water',cave=m.kind==='underground'||m.kind==='castle',air=m.kind==='treetops'||m.kind==='bridge';
+for(let x=0;x<length;x++){const segment=31+m.world*2,local=(x-35)%segment,gap=!watery&&x>35&&x<length-40&&local>=0&&local<(air?4:2+(m.world>4?1:0));if(!gap)for(let y=14;y<17;y++)tile(w,x,y);if(cave&&x<length-35)tile(w,x,3,'stone');}
+for(let section=0;section<5;section++){const x=18+section*32+(m.world*3+m.area*5+section*7)%9,y=air?9+section%3:10;for(let j=0;j<5;j++){tile(w,x+j,y,j===2?'question':air?'cloud':'brick',j===2?(section%2?'flower':'mushroom'):null);w.collect.push({x:(x+j)*16+4,y:(y-1)*16+3,w:8,h:11});}const ex=(x+10)*16;w.enemies.push({x:ex,y:208,w:14,h:16,vx:-.42-m.world*.03,vy:0,type:section%2?'turtle':'grub',alive:true,shell:false,kicked:false,timer:0});if(air)w.platforms.push({x:(x+6)*16,y:192,w:48,h:8,base:(x+6)*16,t:0,range:16,vx:0});}
+if(!air){for(const x of [45,94,143]){for(let dx=0;dx<3;dx++)for(let y=14;y<17;y++)tile(w,x+dx,y);addPipe(w,x,2+(x%2));}w.portals.push(portal(45,176,'bonus',94));}
+if(watery){w.enemies=[];for(let x=25;x<length-25;x+=19){for(let y=12;y<14;y++)tile(w,x,y,'stone');for(let j=0;j<3;j++)w.collect.push({x:(x+j)*16+4,y:110+(x%3)*12,w:8,h:11});}addPipe(w,length-25,2);w.portals.push(portal(length-25,192,'next',m.index+1));w.hasFlag=false;}
+if(m.kind==='castle')w.enemies.push({x:(length-27)*16,y:192,w:30,h:32,vx:-.45,vy:0,type:'boss',alive:true,hp:5,timer:0});
+return w;}
+function warpCavern(w,m){const end=186;w.hasFlag=false;w.flagX=230*16;w.exitX=end*16;w.length=240*16;for(let x=0;x<240;x++){w.tiles.delete(`${x},2`);if(x<181)tile(w,x,4,'stone');if(x>=175)for(let y=14;y<17;y++)tile(w,x,y);}
+// Steps to the ceiling route; a wall separates the ordinary exit from the secret room.
+for(let x=173;x<240;x++)for(let y=4;y<14;y++)w.tiles.delete(`${x},${y}`);for(let step=0;step<5;step++)for(let x=173+step*2;x<175+step*2;x++)tile(w,x,12-step*2,'stone');for(let y=5;y<14;y++)for(let x=190;x<192;x++)tile(w,x,y,'stone');
+for(let x=183;x<=192;x++)tile(w,x,4,'stone');addPipe(w,end,2);w.portals=[portal(end,192,'next',2)];for(const [x,target]of [[200,12],[208,8],[216,4]]){addPipe(w,x,2);w.portals.push(portal(x,192,'warp',target));}w.warpZone={x:198*16,y:140,text:'WELCOME TO WARP ZONE!'};w.enemies=w.enemies.filter(e=>e.x<172*16);}
+function bonus(meta,themes,route){return Bonus.room(meta,themes,route||{room:'vault19',roomId:meta.id+':default'});}
+const api={TOTAL,info,migrate,build,bonus};g.AdventureCampaign=api;if(typeof module!=='undefined')module.exports=api;
+})(globalThis);

@@ -1,6 +1,6 @@
 # Pixel Quest
 
-A complete, original four-stage browser platformer inspired by the feel of 8-bit classics. All sprites, stages, music, and sound effects are generated in code. No paid assets or game engine required.
+An original eight-world, 32-course browser platformer inspired by the feel of 8-bit classics. All sprites, stages, music, and sound effects are generated in code. No paid assets or game engine required.
 
 ## Play
 
@@ -20,6 +20,7 @@ To run it on your own machine, open `index.html` directly in a modern browser, o
 | Attack | J (X also works), after collecting the selected hero's attack upgrade |
 | Pause / resume | P toggles pause; Escape opens the pause menu |
 | Return home | On pause, choose RETURN HOME or press Escape again; confirm or cancel |
+| Enter marked pipe | Down / S, or touch ↓ PIPE |
 | Start / continue | Enter |
 | Restart adventure | R |
 | Mute | M |
@@ -42,9 +43,9 @@ Character choice and ammunition tier persist with the adventure save and between
 
 ## Adventure
 
-Explore Sunrise Meadow, The Crystal Cavern, Cloudtop Crossing, and Ember Keep. Strike question blocks from below. Pixel Explorer alone gets mushrooms for 1.5× growth and flowers for fireballs; other heroes get their own upgrade items. Stars give temporary invincibility. Stomp roaming foes, kick turtle shells, and watch for plants hiding in pipes. Invisible blocks hold bonus stars. Collect 100 coins for an extra life. Flags award height bonuses and remaining time becomes score. Defeat the five-hit keeper before claiming the final flag.
+Explore 1-1 through 8-4, including surface, underground, treetop, night, water and castle courses. See [the classic progression and pipe update](ADVENTURE-CLASSIC-UPDATE.md) for reference rules and adaptation limits. Strike question blocks from below. Pixel Explorer alone gets mushrooms for 1.5× growth and flowers for fireballs; other heroes get their own upgrade items. Stars give temporary invincibility. Stomp roaming foes, kick turtle shells, and watch for plants hiding in pipes. Invisible blocks hold bonus stars. Collect 100 coins for an extra life. Flags award height bonuses and remaining time becomes score. Defeat the five-hit keeper before claiming the final flag.
 
-At each flag, fireworks launch over the finish area while the hero walks to the exit pipe, hops onto it, and disappears inside. The next world starts automatically. After the fourth pipe, the victory screen appears.
+At each flag, fireworks launch over the finish area while the hero walks to the exit pipe, hops onto it, and disappears inside. The next course starts automatically. Victory appears only after 8-4. Marked pipes can enter a coin room and return; the secret room after the 1-2 normal exit offers warps to 4-1, 3-1 and 2-1.
 
 Each stage has a midway checkpoint for recovery after a lost life. Progress saves at stage entry, checkpoints, power-ups, and life changes. Continue from the title screen resumes the saved stage. Best scores persist locally; a completed or exhausted adventure clears its continue save.
 
