@@ -51,7 +51,6 @@ function buildLegacyWorld2(a){
   block(108,10,'question','star');line(108,113,9);
   stairs(150,5); // 中段小阶梯
   stairs(length-22,8); // 末尾大高台
-  for(let x=length-14;x<length-6;x++)block(x,5,'stone'); // 高台顶延伸平台
   block(17,9,'hidden','star');
   enemy(38);enemy(70,'turtle');enemy(110);enemy(140,'turtle');
  }
@@ -91,7 +90,7 @@ function buildLegacyWorld2(a){
   enemy(35);enemy(70,'turtle');enemy(110);
   enemies.push({x:(length-27)*16,y:14*16-32,w:30,h:32,vx:-.5,vy:0,type:'boss',alive:true,hp:5,timer:0});
  }
- const flagX=(length-8)*T;return {tiles,collect,enemies,platforms,length:length*T,flagX,exitX:flagX+9*T,checkpointX:Math.floor(length/2)*T,theme:themes[a]};
+ const flagX=(length-13)*T;return {tiles,collect,enemies,platforms,length:length*T,flagX,exitX:flagX+9*T,checkpointX:Math.floor(length/2)*T,theme:themes[a]};
 }
 function makeWorld(n){return AdventureCampaign.build(n,buildLegacyWorld,buildLegacyWorld2,themes);}
 function loadStage(n,respawn=false){clearPortals();stage=n;world=makeWorld(n);camera=0;particles=[];popups=[];items=[];shots=[];fireworks=[];time=300;finishTime=0;exitPhase='';exitTick=0;const tier=respawn?0:(player?.power||0),weapon=selectedCharacter!=='soldier'||respawn||tier===0?'none':tier===1?'rifle':player?.weapon==='lightning'?'lightning':'spread';player={x:respawn&&checkpoint?checkpoint:40,y:160,w:12,h:16,vx:0,vy:0,facing:1,ground:false,character:selectedCharacter,power:tier,weapon,inv:90,star:0,coyote:0,buffer:0,jumps:0,jumpKind:'normal',jumpVisual:false,bufferKind:'normal',fire:0,dead:0};if(player.character!=='explorer'){player.y-=8;player.w=player.character==='dora'?18:14;player.h=24;}else if(player.power)resizeHero(true);if(player.character==='happy')resizeHero(player.power>0);$('#stage-label').textContent=world.course.id+' / '+world.course.name;audio.beat=0;if(state!=='title')save();}

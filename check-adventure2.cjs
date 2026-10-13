@@ -32,8 +32,8 @@ const SITE = process.argv[2] || ('file://' + require('path').resolve(__dirname, 
     assert(report[2].kind === 'bridge', `2-3 must be bridge (got ${report[2].kind})`);
     assert(report[2].sinking >= 3, `2-3 must have sinking platforms in the second half (got ${report[2].sinking})`);
     assert(report[0].kind === 'surface' && report[3].kind === 'castle', '2-1 surface and 2-4 castle');
-    // 2-1 旗杆要紧贴末尾高台（新 flagX = (length-8)*16）
-    assert(report[0].flagX >= (report[0].length / 16 - 10) * 16, `2-1 flagX ${report[0].flagX} too far from end (length=${report[0].length})`);
+    // 2-1 取消顶部延伸平台后，旗杆直接靠在高台边缘（flagX ≈ (length-13)*16）
+    assert(report[0].flagX >= (report[0].length / 16 - 16) * 16, `2-1 flagX ${report[0].flagX} too far from end (length=${report[0].length})`);
     // 2-2 后半段必须有 5 个 fading 平台
     assert(report[1].platforms >= 5, `2-2 must have fading platforms in second half (got ${report[1].platforms})`);
     const fading2 = report[1].fadingCount || 0;
