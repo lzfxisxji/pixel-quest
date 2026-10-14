@@ -14,7 +14,7 @@ Both fields have the same selected Easy / Normal / Hard / Expert starting gravit
 
 1P: A/D move, S soft drop, W clockwise, Q counterclockwise, Space hard drop, E hold.
 
-2P: Left/Right move, Down soft drop, Up clockwise, Right Shift counterclockwise, Enter hard drop, Right Ctrl hold. Held horizontal movement uses 160 ms DAS / 45 ms ARR; soft drop repeats at 35 ms. Hard drop, hold and rotation are edge-triggered. P / Esc pauses both fields and clock. Blur or hidden page pauses automatically. Mobile has 1P touch controls.
+2P: Left/Right move, Down soft drop, Up clockwise, Right Shift counterclockwise, Enter hard drop, Right Ctrl hold. Held horizontal movement uses 160 ms DAS / 45 ms ARR; soft drop repeats at 35 ms. Hard drop, hold and rotation are edge-triggered. P / Esc pauses both fields and clock. Blur or hidden page pauses automatically. Touch devices (phones and tablets, detected through touch capability) offer Player vs AI only; local 2P remains available on computers. Touch controls support move/soft-drop auto-repeat and one-shot rotation, hold and hard drop. Portrait phones show a large player board and an AI mini-board; landscape phones place the controls beside the boards. Buttons remain available in fullscreen.
 
 ## Scoring
 
