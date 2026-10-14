@@ -1,2 +1,41 @@
-/* Original fixed-screen layouts. Add new worlds by appending stage records. */
-(function(r){const W=640,H=400,ground={x:12,y:370,w:616};const layouts=[[[35,290,225],[370,290,230],[180,210,280]],[[20,290,230],[370,290,250],[135,210,340],[240,130,160]],[[45,290,220],[365,290,225],[150,210,340],[30,130,170],[440,130,170]],[[15,290,255],[360,290,260],[200,210,240],[60,130,160],[420,130,160]],[[40,290,220],[380,290,220],[160,210,320]],[[20,290,240],[370,290,245],[160,210,325],[245,130,150]],[[20,290,250],[365,290,250],[150,210,340],[30,130,180],[430,130,180]],[[30,290,230],[370,290,240],[130,210,365],[230,130,185]],[[20,290,255],[365,290,255],[175,210,300],[40,130,170],[430,130,175]],[[30,290,240],[370,290,240],[150,210,340],[240,130,160]]];const types=[['slime','slime','runner'],['slime','runner','jumper','slime'],['runner','jumper','shooter','slime','runner'],['shield','runner','flyer','jumper','shooter'],['slime','runner','slime'],['heavy','shield','shooter','jumper','flyer'],['heavy','runner','shield','shooter','flyer','jumper'],['shield','heavy','shooter','jumper','flyer','runner'],['heavy','shield','shooter','flyer','jumper','runner','heavy'],['slime','runner','jumper','shield']];const names=['初雪练习场','松林回廊','晶蓝冰洞','雪顶钟楼','霜角守卫','极光峡谷','冰晶工坊','暮色雪堡','暴风前夜','寒星王座'];const stages=layouts.map((rows,i)=>({id:i,name:names[i],biome:i<3?'forest':i<7?'cave':'castle',platforms:[ground,...rows.map(([x,y,w])=>({x,y,w}))],enemies:types[i].map((type,j)=>{const p=j===0?ground:rows[1+(j-1)%(rows.length-1)];return{type,x:Array.isArray(p)?p[0]+35+(j*39)%(p[2]-65):360,y:(Array.isArray(p)?p[1]:p.y)-20};}),boss:i===4?'mini':i===9?'major':null}));const api={W,H,stages};r.FrostStages=api;if(typeof module==='object')module.exports=api;})(globalThis);
+/* Original fixed-screen layouts, redesigned to echo the classic Snow Bros. tower of
+   stacked floors joined by ladders. Add new worlds by appending stage records. */
+(function(r){
+const W=640,H=400,GROUND={x:12,y:370,w:616};
+// Shared upper-floor heights for the classic tower look. Floors leave an alternating
+// gap (right/left) so players can drop down like the original, while ladders climb up.
+const FLOORS=[{x:24,y:290,w:536},{x:80,y:210,w:536},{x:24,y:130,w:536}];
+// Ladder patterns per stage: each entry is [topY, bottomY, x]. A ladder bridges two floors.
+const LAD=[
+ [[290,370,120],[290,370,470],[210,290,300],[130,210,120],[130,210,470]],
+ [[290,370,90],[290,370,520],[210,290,200],[210,290,420],[130,210,300]],
+ [[290,370,150],[290,370,440],[210,290,90],[210,290,520],[130,210,300]],
+ [[290,370,300],[210,290,120],[210,290,470],[130,210,300]],
+ [[290,370,120],[290,370,470],[210,290,300]],
+ [[290,370,90],[290,370,520],[210,290,300],[130,210,120],[130,210,470]],
+ [[290,370,150],[290,370,440],[210,290,90],[210,290,520],[130,210,300]],
+ [[290,370,300],[210,290,120],[210,290,470],[130,210,300]],
+ [[290,370,120],[290,370,470],[210,290,300],[130,210,120],[130,210,470]],
+ [[290,370,300],[210,290,120],[210,290,470]]
+];
+const types=[['slime','slime','runner'],['slime','runner','jumper','slime'],['runner','jumper','shooter','slime','runner'],['shield','runner','flyer','jumper','shooter'],['slime','runner','slime'],['heavy','shield','shooter','jumper','flyer'],['heavy','runner','shield','shooter','flyer','jumper'],['shield','heavy','shooter','jumper','flyer','runner'],['heavy','shield','shooter','flyer','jumper','runner','heavy'],['slime','runner','jumper','shield']];
+const names=['初雪练习场','松林回廊','晶蓝冰洞','雪顶钟楼','霜角守卫','极光峡谷','冰晶工坊','暮色雪堡','暴风前夜','寒星王座'];
+const LW=12; // ladder width
+const stages=LAD.map((ladders,i)=>{
+  const platforms=[GROUND,...FLOORS];
+  const enemies=types[i].map((type,j)=>{
+    const lvl=j===0?GROUND:FLOORS[(j-1)%FLOORS.length];
+    return {type,x:lvl.x+30+(j*70)%(lvl.w-60),y:lvl.y-20};
+  });
+  return {
+    id:i,name:names[i],biome:i<3?'forest':i<7?'cave':'castle',
+    platforms,
+    ladders:ladders.map(([top,bottom,x])=>({x,top,bottom,w:LW})),
+    enemies,
+    boss:i===4?'mini':i===9?'major':null
+  };
+});
+const api={W,H,stages};
+r.FrostStages=api;
+if(typeof module==='object')module.exports=api;
+})(globalThis);
